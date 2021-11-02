@@ -70,6 +70,8 @@ GEM
     dotenv-rails (2.7.6)
       dotenv (= 2.7.6)
       railties (>= 3.2)
+    enum_help (0.0.17)
+      activesupport (>= 3.0.0)
     erubi (1.10.0)
     ffi (1.15.4)
     globalid (0.5.2)
@@ -153,6 +155,7 @@ DEPENDENCIES
   bootsnap (>= 1.4.4)
   byebug
   dotenv-rails
+  enum_help
   line-bot-api
   listen (~> 3.3)
   puma (~> 5.0)
