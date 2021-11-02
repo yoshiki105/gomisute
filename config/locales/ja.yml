@@ -1,0 +1,16 @@
+ja:
+  enums:
+    collection_day:
+      day_of_week:
+        monday: 月曜日
+        tuesday: 火曜日
+        wednesday: 水曜日
+        thursday: 木曜日
+        friday: 金曜日
+        saturday: 土曜日
+        sunday: 日曜日
+      cycle:
+        every_week: 毎週
+        every_other_week: 隔週
+        first_and_third: 第1・3
+        second_and_fourth: 第2・4
