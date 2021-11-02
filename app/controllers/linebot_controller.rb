@@ -152,7 +152,7 @@ class LinebotController < ApplicationController
                 「#{@trash.name}」の収集日は「#{@collection_day.cycle_i18n}」の「#{@collection_day.day_of_week_i18n}」だね！
                 登録したよ！
               EOS
-              @user.add_cycle!
+              @user.top!
             end
           ### 編集モード ###
           when 'edit'
