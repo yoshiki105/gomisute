@@ -11,4 +11,7 @@ class User < ApplicationRecord
     add_cycle: 6,
   }
 
+  def latest_trash
+    trashes.order(created_at: :desc).first
+  end
 end
