@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   has_many :trashes, dependent: :destroy
+  has_many :messages, dependent: :destroy
 
   enum mode: {
     top: 0,
