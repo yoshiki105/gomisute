@@ -10,6 +10,9 @@ class User < ApplicationRecord
     show_next: 4,
     add_day_of_week: 5,
     add_cycle: 6,
+    which_trash_to_edit: 7,
+    which_item_to_edit: 8,
+    edit_complete: 9,
   }
 
   def latest_trash
@@ -38,6 +41,22 @@ class User < ApplicationRecord
       str << "=============================\n"
     else
       str << "登録しているゴミはありません.\n"
+    end
+  end
+
+  # 編集可能なゴミを一覧表示するための文字列を整形する
+  def show_editable_trashes
+    if trashes.present?
+      str = ''
+
+      trashes_lists.each.with_index(1) do |trashes_list, index|
+        str << "=============================\n#{index}:\n"
+        trashes_list.each{ |line| str << "  #{line}\n" }
+      end
+
+      str << "=============================\n0: 編集を中止する"
+    else
+      "登録しているゴミはありません.\n"
     end
   end
 end
