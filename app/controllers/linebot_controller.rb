@@ -55,27 +55,13 @@ class LinebotController < ApplicationController
               EOS
 
             when '3', '３' # 内容編集
-              ################ 登録してあるゴミのリストを表示する #####################
-              response += '登録内容の編集だね！
-              どれを編集する？
-              ==============================
-              1:
-                燃えるゴミ
-                毎週
-                月曜日・木曜日
-              ==============================
-              2:
-                燃えないゴミ
-                毎週
-                水曜日
-              ==============================
-              3:
-                衣類
-                第一・四
-                木曜日
-              ==============================
-              0: 編集を中止する'
-              @user.edit!
+              response +=  <<~EOS
+                登録内容の編集だね！
+                どれを編集する？
+                #{@user.show_editable_trashes}
+              EOS
+              @user.which_trash_to_edit!
+
             when '4', '４' # 次回確認
               response += "次回のゴミ収集日は、
                 燃えるゴミ
@@ -154,9 +140,86 @@ class LinebotController < ApplicationController
               @user.top!
             end
           ### 編集モード ###
-          when 'edit'
-            response += "登録内容を編集するモードです。\n"
-            response += "入力されたテキストは#{text}です。\n"
+          when 'which_trash_to_edit'
+            @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+            trash = @user.trashes[text.to_i - 1] #=> ユーザーが選択したゴミ
+
+            response +=  <<~EOS
+              「#{trash.name}」が選択されたよ！
+              どの項目を編集する？
+                1: 収集物の名前
+                2: 周期
+                3: 曜日
+                0: 編集をやめる
+            EOS
+
+            @user.which_item_to_edit!
+
+          when 'which_item_to_edit'
+            @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+            items = ['ゴミの名前', '周期', '曜日']
+            item = items[text.to_i - 1] #=> ユーザーが選択した項目
+            response +=  "変更するのは「#{item}」だね！\n"
+
+            case item
+            when 'ゴミの名前'
+              response +=  <<~EOS
+                どんな名前にする？（例）燃えないゴミ
+              EOS
+            when '周期'
+              response +=  <<~EOS
+                周期をどれに変更する？
+                  1: 毎週
+                  2: 隔週
+                  3: 第１・３
+                  4: 第２・４
+                  0: やめる
+              EOS
+            when '曜日'
+              response +=  <<~EOS
+                収集日をいつに変更する？
+                  1: 月曜日
+                  2: 火曜日
+                  3: 水曜日
+                  4: 木曜日
+                  5: 金曜日
+                  6: 土曜日
+                  7: 日曜日
+                  0: やめる
+              EOS
+            end
+
+            @user.edit_complete!
+
+          when 'edit_complete'
+            # 変更対象のゴミのインスタンス @trash を決定する
+            two_pre_message = @user.messages[-2].text
+            @trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
+            # 変更するゴミの項目 item を決定する
+            items = ['ゴミの名前', '周期', '曜日']
+            one_pre_message = @user.messages[-1].text #=> 項目番号
+            item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
+            
+            # 変更操作
+            case item
+            when 'ゴミの名前'
+              @trash.update!(name: text)
+            when '周期'
+              @trash.latest_collection_day.update!(cycle: text.to_i)
+            when '曜日'
+              @trash.latest_collection_day.update!(day_of_week: text.to_i)
+            end
+
+            response += <<~EOS
+              編集完了したよ！
+              新しい登録内容は、
+                #{@trash.name}
+                #{@trash.latest_collection_day.cycle_i18n}
+                #{@trash.latest_collection_day.day_of_week_i18n}
+              だよ！\n
+            EOS
+
+            @user.top!
           end
 
           if @user.top?
