@@ -42,16 +42,16 @@ class LinebotController < ApplicationController
               response += "中止だね！\n"
             when '1', '１' # ゴミ登録
               response +=  <<~EOS
-              ゴミの登録だね！
-              何のゴミを登録する？一つだけ答えてね！
-              (例)燃えるゴミ
+                ゴミの登録だね！
+                何のゴミを登録する？一つだけ答えてね！
+                (例)燃えるゴミ
               EOS
               @user.registration!
             when '2', '２' # 登録してあるゴミの一覧表示
               response +=  <<~EOS
-              登録内容の確認だね！
-              今登録している内容は以下の通りだよ！
-              #{@user.show_trashes}
+                登録内容の確認だね！
+                今登録している内容は以下の通りだよ！
+                #{@user.show_trashes}
               EOS
 
             when '3', '３' # 内容編集
@@ -199,7 +199,7 @@ class LinebotController < ApplicationController
             items = ['ゴミの名前', '周期', '曜日']
             one_pre_message = @user.messages[-1].text #=> 項目番号
             item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
-            
+
             # 変更操作
             case item
             when 'ゴミの名前'
@@ -225,6 +225,7 @@ class LinebotController < ApplicationController
           if @user.top?
             # モード選択を問う
             response +=  <<~EOS
+                =============================
                 次はどうする？
                 ↓↓番号を選択↓↓
                   1. ゴミの登録
