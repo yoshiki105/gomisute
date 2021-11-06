@@ -64,12 +64,15 @@ GEM
       msgpack (~> 1.0)
     builder (3.2.4)
     byebug (11.1.3)
+    coderay (1.1.3)
     concurrent-ruby (1.1.9)
     crass (1.0.6)
     dotenv (2.7.6)
     dotenv-rails (2.7.6)
       dotenv (= 2.7.6)
       railties (>= 3.2)
+    enum_help (0.0.17)
+      activesupport (>= 3.0.0)
     erubi (1.10.0)
     ffi (1.15.4)
     globalid (0.5.2)
@@ -93,6 +96,11 @@ GEM
     nio4r (2.5.8)
     nokogiri (1.12.5-x86_64-darwin)
       racc (~> 1.4)
+    pry (0.14.1)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
+    pry-rails (0.3.9)
+      pry (>= 0.10.4)
     puma (5.5.2)
       nio4r (~> 2.0)
     racc (1.6.0)
@@ -153,8 +161,10 @@ DEPENDENCIES
   bootsnap (>= 1.4.4)
   byebug
   dotenv-rails
+  enum_help
   line-bot-api
   listen (~> 3.3)
+  pry-rails
   puma (~> 5.0)
   rails (~> 6.1.4, >= 6.1.4.1)
   spring
