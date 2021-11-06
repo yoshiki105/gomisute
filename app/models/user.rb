@@ -15,10 +15,6 @@ class User < ApplicationRecord
     edit_complete: 9,
   }
 
-  def latest_trash
-    trashes.order(created_at: :desc).first
-  end
-
   # [[燃えるゴミ, 毎週, 月曜日], [燃えないゴミ, 隔週, 木曜日], ...] のような二次配列を返す
   def trashes_lists
     trashes.map do |trash|

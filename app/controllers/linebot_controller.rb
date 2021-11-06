@@ -75,7 +75,8 @@ class LinebotController < ApplicationController
             end
           ### 登録モード ###
           when 'registration'
-            @user.trashes.create!(name: text)
+            @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+
             response +=  <<~EOS
               「#{text}」を登録するね！
               収集日はいつかな？
@@ -88,28 +89,16 @@ class LinebotController < ApplicationController
                 7: 日曜日
                 0: ゴミの登録をやめる\n
             EOS
+
             @user.add_day_of_week!
           when 'add_day_of_week'
             # 回収日複数は後で実装予定
-            # 一個前のリクエストから、@trashをどうやって保持する？ ↓最新のTrash
-            @trash = @user.latest_trash
-
-            case text
-            when '1', '１'; @trash.collection_days.create!(day_of_week: :monday)
-            when '2', '２'; @trash.collection_days.create!(day_of_week: :tuesday)
-            when '3', '３'; @trash.collection_days.create!(day_of_week: :wednesday)
-            when '4', '４'; @trash.collection_days.create!(day_of_week: :thursday)
-            when '5', '５'; @trash.collection_days.create!(day_of_week: :friday)
-            when '6', '６'; @trash.collection_days.create!(day_of_week: :saturday)
-            when '7', '７'; @trash.collection_days.create!(day_of_week: :sunday)
-            else
-              response += "数字で入力してね！\n"
-            end
-
             if text =~ /^([1-7]|[１-７])$/
+              @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+              trash_name = @user.messages[-2].text
+
               response +=  <<~EOS
-                「#{@trash.name}」の収集日は「#{@trash.latest_collection_day.day_of_week_i18n}」だね！
-                次に、周期を教えてね！
+                次に、「#{trash_name}」の周期を教えてね！
                   1: 毎週
                   2: 隔週
                   3: 第１・３
@@ -120,24 +109,38 @@ class LinebotController < ApplicationController
               @user.add_cycle!
             end
           when 'add_cycle'
-            @trash = @user.latest_trash
-            @collection_day = @trash.latest_collection_day
-
-            case text
-            when '1', '１'; @collection_day.update!(cycle: :every_week)
-            when '2', '２'; @collection_day.update!(cycle: :every_other_week)
-            when '3', '３'; @collection_day.update!(cycle: :first_and_third)
-            when '4', '４'; @collection_day.update!(cycle: :second_and_fourth)
-            else
-              response += "数字で入力してね！\n"
-            end
-
             if text =~ /^([1-4]|[１-４])$/
+              @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+              # ゴミの名前の決定
+              trash_name = @user.messages[-3].text
+              # 曜日の決定
+              day_of_week = case @user.messages[-2].text
+                when '1', '１';  :monday
+                when '2', '２';  :tuesday
+                when '3', '３';  :wednesday
+                when '4', '４';  :thursday
+                when '5', '５';  :friday
+                when '6', '６';  :saturday
+                when '7', '７';  :sunday
+                end
+              # 周期の決定
+              cycle = case @user.messages[-1].text
+                when '1', '１'; :every_week
+                when '2', '２'; :every_other_week
+                when '3', '３'; :first_and_third
+                when '4', '４'; :second_and_fourth
+                end
+
+              @trash = @user.trashes.create!(name: trash_name)
+              @collection_day = @trash.collection_days.create!(day_of_week: day_of_week, cycle: cycle)
+
               response +=  <<~EOS
                 「#{@trash.name}」の収集日は「#{@collection_day.cycle_i18n}」の「#{@collection_day.day_of_week_i18n}」だね！
                 登録したよ！
               EOS
               @user.top!
+            else
+              response += "正しく入力してね！\n"
             end
           ### 編集モード ###
           when 'which_trash_to_edit'
