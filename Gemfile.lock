@@ -97,6 +97,7 @@ GEM
     nio4r (2.5.8)
     nokogiri (1.12.5-x86_64-darwin)
       racc (~> 1.4)
+    pg (1.2.3)
     pry (0.14.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -167,6 +168,7 @@ DEPENDENCIES
   enum_help
   line-bot-api
   listen (~> 3.3)
+  pg
   pry-rails
   puma (~> 5.0)
   rails (~> 6.1.4, >= 6.1.4.1)
