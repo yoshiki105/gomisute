@@ -12,6 +12,13 @@ class LinebotController < ApplicationController
     }
   end
 
+  def push(user, text)
+    message = {
+        type: 'text',
+        text: text
+       }
+    response = client.push_message(user.line_id, message)
+  end
 
   def callback
     body = request.body.read
