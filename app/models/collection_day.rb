@@ -17,4 +17,8 @@ class CollectionDay < ApplicationRecord
     first_and_third: 3, # 第一・三
     second_and_fourth: 4, # 第二・四
   }
+
+  def user
+    trash.user
+  end
 end
