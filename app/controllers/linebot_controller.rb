@@ -4,13 +4,23 @@ class LinebotController < ApplicationController
   # before_action :set_line, only: [:show, :edit, :update, :destroy]
   # protect_from_forgery with: :null_session
 
-  def callback
-    client ||= Line::Bot::Client.new { |config|
+  def client
+    @client ||= Line::Bot::Client.new { |config|
       config.channel_id = ENV["LINE_CHANNEL_ID"]
       config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
       config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
     }
+  end
 
+  def push(user, text)
+    message = {
+        type: 'text',
+        text: text
+       }
+    response = client.push_message(user.line_id, message)
+  end
+
+  def callback
     body = request.body.read
 
     signature = request.env['HTTP_X_LINE_SIGNATURE']
