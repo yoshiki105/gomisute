@@ -10,15 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_03_012529) do
+ActiveRecord::Schema.define(version: 2021_11_12_013657) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
     t.integer "trash_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.integer "cycle"
     t.index ["trash_id"], name: "index_collection_days_on_trash_id"
+  end
+
+  create_table "cycles", force: :cascade do |t|
+    t.integer "trash_id", null: false
+    t.integer "name", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["trash_id"], name: "index_cycles_on_trash_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -45,6 +52,7 @@ ActiveRecord::Schema.define(version: 2021_11_03_012529) do
   end
 
   add_foreign_key "collection_days", "trashes"
+  add_foreign_key "cycles", "trashes"
   add_foreign_key "messages", "users"
   add_foreign_key "trashes", "users"
 end
