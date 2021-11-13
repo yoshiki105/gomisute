@@ -10,22 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_12_013657) do
+ActiveRecord::Schema.define(version: 2021_11_13_021513) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
-    t.integer "trash_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["trash_id"], name: "index_collection_days_on_trash_id"
   end
 
   create_table "cycles", force: :cascade do |t|
-    t.integer "trash_id", null: false
     t.integer "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["trash_id"], name: "index_cycles_on_trash_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -41,6 +37,10 @@ ActiveRecord::Schema.define(version: 2021_11_12_013657) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "user_id", null: false
+    t.integer "cycle_id", null: false
+    t.integer "collection_day_id", null: false
+    t.index ["collection_day_id"], name: "index_trashes_on_collection_day_id"
+    t.index ["cycle_id"], name: "index_trashes_on_cycle_id"
     t.index ["user_id"], name: "index_trashes_on_user_id"
   end
 
@@ -51,8 +51,8 @@ ActiveRecord::Schema.define(version: 2021_11_12_013657) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  add_foreign_key "collection_days", "trashes"
-  add_foreign_key "cycles", "trashes"
   add_foreign_key "messages", "users"
+  add_foreign_key "trashes", "collection_days"
+  add_foreign_key "trashes", "cycles"
   add_foreign_key "trashes", "users"
 end

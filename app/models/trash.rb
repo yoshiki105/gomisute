@@ -1,7 +1,7 @@
 class Trash < ApplicationRecord
   belongs_to :user
-  has_many :collection_days, dependent: :destroy
-  has_one :cycle
+  belongs_to :collection_day
+  belongs_to :cycle
 
   def latest_collection_day
     collection_days.order(created_at: :desc).first
