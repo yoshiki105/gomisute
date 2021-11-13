@@ -1,5 +1,5 @@
 class CollectionDay < ApplicationRecord
-  belongs_to :trash
+  has_many :trashes
 
   enum day_of_week: {
     monday: 1,
