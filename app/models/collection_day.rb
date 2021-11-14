@@ -1,5 +1,6 @@
 class CollectionDay < ApplicationRecord
-  has_many :trashes
+  has_many :trash_collection_days
+  has_many :trashes, through: :trash_collection_days
 
   enum day_of_week: {
     monday: 1,
