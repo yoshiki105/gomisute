@@ -110,9 +110,10 @@ class LinebotController < ApplicationController
               @response +=  <<~EOS
                 次に、「#{trash_name}」の周期を教えてね！
                   1: 毎週
-                  2: 隔週
-                  3: 第１・３
-                  4: 第２・４
+                  2: 今週から隔週
+                  3: 来週から隔週
+                  4: 第１・３
+                  5: 第２・４
                   0: やめる
               EOS
 
@@ -128,7 +129,15 @@ class LinebotController < ApplicationController
               # 曜日の決定
               collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
               # 周期の決定
-              cycle = Cycle.find_by(name: @user.messages[-1].text)
+              now_week_num = Date.today.strftime('%W').to_i
+              cycle_name = case @user.messages[-1].text
+              when '1'; :every_week
+              when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
+              when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
+              when '4'; :first_and_third
+              when '5'; :second_and_fourth
+              end
+              cycle = Cycle.find_by(name: cycle_name)
 
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
@@ -172,9 +181,10 @@ class LinebotController < ApplicationController
                 @response +=  <<~EOS
                   周期をどれに変更する？
                     1: 毎週
-                    2: 隔週
-                    3: 第１・３
-                    4: 第２・４
+                    2: 今週から隔週
+                    3: 来週から隔週
+                    4: 第１・３
+                    5: 第２・４
                     0: やめる
                 EOS
               when '曜日'
@@ -212,7 +222,17 @@ class LinebotController < ApplicationController
               edit_complete
             when '周期'
               if text =~ /^[1-4]$/
-                @trash.cycle.update!(name: text.to_i)
+                # 周期の決定
+                now_week_num = Date.today.strftime('%W').to_i
+                cycle_name = case text
+                when '1'; :every_week
+                when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
+                when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
+                when '4'; :first_and_third
+                when '5'; :second_and_fourth
+                end
+
+                @trash.cycle.update!(name: cycle_name)
                 edit_complete
               else
                 @response += "正しく入力してね！\n"

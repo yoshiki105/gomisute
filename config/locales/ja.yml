@@ -1,4 +1,7 @@
 ja:
+  errors:
+    messages:
+      record_invalid: "バリデーションに失敗しました: %{errors}"
   enums:
     collection_day:
       day_of_week:
@@ -12,6 +15,7 @@ ja:
     cycle:
       name:
         every_week: 毎週
-        every_other_week: 隔週
+        odd_weeks: 隔週(奇数週)
+        even_weeks: 隔週(偶数週)
         first_and_third: 第1・3
         second_and_fourth: 第2・4
