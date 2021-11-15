@@ -1,13 +1,16 @@
 namespace :trash do
   desc '今日捨てるゴミがあるかどうかチェックする'
   task check_today: :environment do
-    todays_day = Date.today.strftime('%A').downcase # 今日の曜日(文字列)
+    todays_date = Date.today
+    youbi = todays_date.strftime('%A').downcase #=> "sunday" 今日の曜日
+    date = todays_date.strftime("%-d") #=> "14" 今日の日付
+    nansyu = (date.to_i - 1) / 7 + 1 #=> 2 今日が第何週か
+    todays_trashes = Trash.throw_away(nansyu, youbi) # youbi, nansyuから、今日捨てるべきTrashのコレクションを作成
+    users = todays_trashes.group(:user_id).map(&:user) # 通知するべきUserのコレクションを作成
 
-    # 通知するべきuserを特定
-    users = CollectionDay.where(day_of_week: todays_day).map(&:user)
+    # Userごとにtextを組み立てて通知を送る
     users.each do |user|
-      # userの持っているtrashesに対して、今日捨てるべきtrashesのname群を返す
-      trashes_name = user.trashes.select { |trash| trash.is_thrown_away?(todays_day) }.pluck(:name)
+      trashes_name = todays_trashes.search_with_user(user).pluck(:name)
 
       text = <<~EOS
         本日はゴミ捨ての日です！
