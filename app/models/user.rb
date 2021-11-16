@@ -13,7 +13,7 @@ class User < ApplicationRecord
     which_trash_to_edit: 7,
     which_item_to_edit: 8,
     edit_complete: 9,
-    delete_confirm: 10,
+    delete_confirm: 10
   }
 
   # [[燃えるゴミ, 毎週, 月曜日], [燃えないゴミ, 隔週, 木曜日], ...] のような二次配列を返す
@@ -33,7 +33,7 @@ class User < ApplicationRecord
     if trashes.present?
       trashes_lists.each do |trashes_list|
         str << "=============================\n"
-        trashes_list.each{ |line| str << (line + "\n") }
+        trashes_list.each { |line| str << ("#{line}\n") }
       end
       str << "=============================\n"
     else
@@ -48,7 +48,7 @@ class User < ApplicationRecord
 
       trashes_lists.each.with_index(1) do |trashes_list, index|
         str << "=============================\n#{index}:\n"
-        trashes_list.each{ |line| str << "  #{line}\n" }
+        trashes_list.each { |line| str << "  #{line}\n" }
       end
 
       str << "=============================\n0: 編集を中止する"
