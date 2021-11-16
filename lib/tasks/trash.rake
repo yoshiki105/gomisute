@@ -1,7 +1,7 @@
 namespace :trash do
   desc '今日捨てるゴミがあるかどうかチェックする'
   task check_today: :environment do
-    todays_date = Date.today
+    todays_date = Time.zone.today
     youbi = todays_date.strftime('%A').downcase #=> "sunday" 今日の曜日
     date = todays_date.strftime('%-d') #=> "14" 今日の日付
     nansyu = (date.to_i - 1) / 7 + 1 #=> 2 今日が第何週か
@@ -12,11 +12,11 @@ namespace :trash do
     users.each do |user|
       trashes_name = todays_trashes.search_with_user(user).pluck(:name)
 
-      text = <<~EOS
+      text = <<~TEXT
         本日はゴミ捨ての日です！
         以下を確認して捨てる準備しましょう！
         ==============================
-      EOS
+      TEXT
 
       trashes_name.each do |name|
         text << "#{name}\n"

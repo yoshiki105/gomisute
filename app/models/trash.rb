@@ -20,7 +20,7 @@ class Trash < ApplicationRecord
                        end
     ## 隔週のゴミを追加する
     # 今日の週番号
-    now_week_num = Date.today.strftime('%W').to_i
+    now_week_num = Time.zone.today.strftime('%W').to_i
     # 奇数ならodd_weeksを、そうでないならeven_weeksを追加する
     searching_cycles << (now_week_num.even? ? :even_weeks : :odd_weeks)
 
@@ -31,7 +31,7 @@ class Trash < ApplicationRecord
     collection_days.order(created_at: :desc).first
   end
 
-  def is_thrown_away?(day)
+  def thrown_away?(day)
     collection_days.where(day_of_week: day).present?
   end
 end
