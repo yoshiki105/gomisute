@@ -9,15 +9,15 @@ class Trash < ApplicationRecord
   scope :search_with_youbi, ->(youbi) { where(collection_days: { day_of_week: youbi }) }
   scope :search_with_cycle, ->(cycle) { where(cycles: { name: cycle }) }
   scope :search_with_user, ->(user) { where(user_id: user.id) }
-  scope :throw_away, -> (nansyu, youbi) do
+  scope :throw_away, lambda { |nansyu, youbi|
     searching_cycles = case nansyu
-    when 1, 3
-      [:every_week, :first_and_third]
-    when 2, 4
-      [:every_week, :second_and_fourth]
-    else
-      [:every_week]
-    end
+                       when 1, 3
+                         %i[every_week first_and_third]
+                       when 2, 4
+                         %i[every_week second_and_fourth]
+                       else
+                         [:every_week]
+                       end
     ## 隔週のゴミを追加する
     # 今日の週番号
     now_week_num = Date.today.strftime('%W').to_i
@@ -25,7 +25,7 @@ class Trash < ApplicationRecord
     searching_cycles << (now_week_num.even? ? :even_weeks : :odd_weeks)
 
     with_collection_days.search_with_youbi(youbi).with_cycle.search_with_cycle(searching_cycles)
-  end
+  }
 
   def latest_collection_day
     collection_days.order(created_at: :desc).first

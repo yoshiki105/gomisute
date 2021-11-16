@@ -3,7 +3,7 @@ namespace :trash do
   task check_today: :environment do
     todays_date = Date.today
     youbi = todays_date.strftime('%A').downcase #=> "sunday" 今日の曜日
-    date = todays_date.strftime("%-d") #=> "14" 今日の日付
+    date = todays_date.strftime('%-d') #=> "14" 今日の日付
     nansyu = (date.to_i - 1) / 7 + 1 #=> 2 今日が第何週か
     todays_trashes = Trash.throw_away(nansyu, youbi) # youbi, nansyuから、今日捨てるべきTrashのコレクションを作成
     users = todays_trashes.group(:user_id).map(&:user) # 通知するべきUserのコレクションを作成

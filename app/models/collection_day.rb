@@ -9,10 +9,8 @@ class CollectionDay < ApplicationRecord
     thursday: 4,
     friday: 5,
     saturday: 6,
-    sunday: 7,
+    sunday: 7
   }
 
-  def user
-    trash.user
-  end
+  delegate :user, to: :trash
 end
