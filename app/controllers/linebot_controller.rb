@@ -5,18 +5,18 @@ class LinebotController < ApplicationController
   # protect_from_forgery with: :null_session
 
   def client
-    @client ||= Line::Bot::Client.new { |config|
-      config.channel_id = ENV["LINE_CHANNEL_ID"]
-      config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
-      config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-    }
+    @client ||= Line::Bot::Client.new do |config|
+      config.channel_id = ENV['LINE_CHANNEL_ID']
+      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
+      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
+    end
   end
 
   def push(user, text)
     message = {
-        type: 'text',
-        text: text
-       }
+      type: 'text',
+      text: text
+    }
     @response = client.push_message(user.line_id, message)
   end
 
@@ -24,9 +24,7 @@ class LinebotController < ApplicationController
     body = request.body.read
 
     signature = request.env['HTTP_X_LINE_SIGNATURE']
-    unless client.validate_signature(body, signature)
-      head :bad_request
-    end
+    head :bad_request unless client.validate_signature(body, signature)
 
     events = client.parse_events_from(body)
     events.each do |event|
@@ -87,7 +85,7 @@ class LinebotController < ApplicationController
           when 'registration'
             @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
 
-            @response +=  <<~EOS
+            @response += <<~EOS
               「#{text}」を登録するね！
               収集日はいつかな？
                 1: 月曜日
@@ -107,7 +105,7 @@ class LinebotController < ApplicationController
               @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
               trash_name = @user.messages[-2].text
 
-              @response +=  <<~EOS
+              @response += <<~EOS
                 次に、「#{trash_name}」の周期を教えてね！
                   1: 毎週
                   2: 今週から隔週
@@ -131,17 +129,17 @@ class LinebotController < ApplicationController
               # 周期の決定
               now_week_num = Date.today.strftime('%W').to_i
               cycle_name = case @user.messages[-1].text
-              when '1'; :every_week
-              when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
-              when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
-              when '4'; :first_and_third
-              when '5'; :second_and_fourth
-              end
+                           when '1' then :every_week
+                           when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                           when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                           when '4' then :first_and_third
+                           when '5' then :second_and_fourth
+                           end
               cycle = Cycle.find_by(name: cycle_name)
 
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
-              @response +=  <<~EOS
+              @response += <<~EOS
                 「#{@trash.name}」の収集日は「#{@trash.cycle.name_i18n}」の「#{collection_day.day_of_week_i18n}」だね！
                 登録したよ！
               EOS
@@ -154,7 +152,7 @@ class LinebotController < ApplicationController
             @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
             trash = @user.trashes[text.to_i - 1] #=> ユーザーが選択したゴミ
 
-            @response +=  <<~EOS
+            @response += <<~EOS
               「#{trash.name}」が選択されたよ！
               どの項目を編集する？
                 1: 収集物の名前
@@ -167,19 +165,20 @@ class LinebotController < ApplicationController
             @user.which_item_to_edit!
 
           when 'which_item_to_edit'
-            if text =~ /^([1-3]|[１-３])$/
+            case text
+            when /^([1-3]|[１-３])$/
               @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
-              items = ['ゴミの名前', '周期', '曜日']
+              items = %w[ゴミの名前 周期 曜日]
               item = items[text.to_i - 1] #=> ユーザーが選択した項目
-              @response +=  "変更するのは「#{item}」だね！\n"
+              @response += "変更するのは「#{item}」だね！\n"
 
               case item
               when 'ゴミの名前'
-                @response +=  <<~EOS
+                @response += <<~EOS
                   どんな名前にする？（例）燃えないゴミ
                 EOS
               when '周期'
-                @response +=  <<~EOS
+                @response += <<~EOS
                   周期をどれに変更する？
                     1: 毎週
                     2: 今週から隔週
@@ -189,7 +188,7 @@ class LinebotController < ApplicationController
                     0: やめる
                 EOS
               when '曜日'
-                @response +=  <<~EOS
+                @response += <<~EOS
                   収集日をいつに変更する？
                     1: 月曜日
                     2: 火曜日
@@ -203,8 +202,8 @@ class LinebotController < ApplicationController
               end
 
               @user.edit_complete!
-            elsif text =~ /^(4|４)$/
-              @response +=  <<~EOS
+            when /^(4|４)$/
+              @response += <<~EOS
                 本当に削除してよろしいですか？
                 元には戻せません。
                   1: 削除を実行する
@@ -221,7 +220,7 @@ class LinebotController < ApplicationController
             two_pre_message = @user.messages[-2].text
             @trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
             # 変更するゴミの項目 item を決定する
-            items = ['ゴミの名前', '周期', '曜日']
+            items = %w[ゴミの名前 周期 曜日]
             one_pre_message = @user.messages[-1].text #=> 項目番号
             item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
 
@@ -235,12 +234,12 @@ class LinebotController < ApplicationController
                 # 周期の決定
                 now_week_num = Date.today.strftime('%W').to_i
                 cycle_name = case text
-                when '1'; :every_week
-                when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
-                when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
-                when '4'; :first_and_third
-                when '5'; :second_and_fourth
-                end
+                             when '1' then :every_week
+                             when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                             when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                             when '4' then :first_and_third
+                             when '5' then :second_and_fourth
+                             end
 
                 @trash.cycle.update!(name: cycle_name)
                 edit_complete
@@ -282,14 +281,14 @@ class LinebotController < ApplicationController
 
           if @user.top?
             # モード選択を問う
-            @response +=  <<~EOS
-                =============================
-                次はどうする？
-                ↓↓番号を選択↓↓
-                  1. ゴミの登録
-                  2. 登録内容の確認
-                  3. 登録内容の編集
-                  4. 次回のゴミ収集日の確認
+            @response += <<~EOS
+              =============================
+              次はどうする？
+              ↓↓番号を選択↓↓
+                1. ゴミの登録
+                2. 登録内容の確認
+                3. 登録内容の編集
+                4. 次回のゴミ収集日の確認
             EOS
           end
 
