@@ -5,18 +5,18 @@ class LinebotController < ApplicationController
   # protect_from_forgery with: :null_session
 
   def client
-    @client ||= Line::Bot::Client.new { |config|
-      config.channel_id = ENV["LINE_CHANNEL_ID"]
-      config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
-      config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-    }
+    @client ||= Line::Bot::Client.new do |config|
+      config.channel_id = ENV['LINE_CHANNEL_ID']
+      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
+      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
+    end
   end
 
   def push(user, text)
     message = {
-        type: 'text',
-        text: text
-       }
+      type: 'text',
+      text: text
+    }
     @response = client.push_message(user.line_id, message)
   end
 
@@ -24,9 +24,7 @@ class LinebotController < ApplicationController
     body = request.body.read
 
     signature = request.env['HTTP_X_LINE_SIGNATURE']
-    unless client.validate_signature(body, signature)
-      head :bad_request
-    end
+    head :bad_request unless client.validate_signature(body, signature)
 
     events = client.parse_events_from(body)
     events.each do |event|
@@ -51,25 +49,25 @@ class LinebotController < ApplicationController
             when '0', '０'
               @response += "中止だね！\n"
             when '1', '１' # ゴミ登録
-              @response +=  <<~EOS
+              @response +=  <<~TEXT
                 ゴミの登録だね！
                 何のゴミを登録する？一つだけ答えてね！
                 (例)燃えるゴミ
-              EOS
+              TEXT
               @user.registration!
             when '2', '２' # 登録してあるゴミの一覧表示
-              @response +=  <<~EOS
+              @response +=  <<~TEXT
                 登録内容の確認だね！
                 今登録している内容は以下の通りだよ！
                 #{@user.show_trashes}
-              EOS
+              TEXT
 
             when '3', '３' # 内容編集
-              @response +=  <<~EOS
+              @response +=  <<~TEXT
                 登録内容の編集だね！
                 どれを編集する？
                 #{@user.show_editable_trashes}
-              EOS
+              TEXT
               @user.which_trash_to_edit!
 
             when '4', '４' # 次回確認
@@ -87,7 +85,7 @@ class LinebotController < ApplicationController
           when 'registration'
             @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
 
-            @response +=  <<~EOS
+            @response += <<~TEXT
               「#{text}」を登録するね！
               収集日はいつかな？
                 1: 月曜日
@@ -98,7 +96,7 @@ class LinebotController < ApplicationController
                 6: 土曜日
                 7: 日曜日
                 0: ゴミの登録をやめる\n
-            EOS
+            TEXT
 
             @user.add_day_of_week!
           when 'add_day_of_week'
@@ -107,7 +105,7 @@ class LinebotController < ApplicationController
               @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
               trash_name = @user.messages[-2].text
 
-              @response +=  <<~EOS
+              @response += <<~TEXT
                 次に、「#{trash_name}」の周期を教えてね！
                   1: 毎週
                   2: 今週から隔週
@@ -115,7 +113,7 @@ class LinebotController < ApplicationController
                   4: 第１・３
                   5: 第２・４
                   0: やめる
-              EOS
+              TEXT
 
               @user.add_cycle!
             else
@@ -129,22 +127,22 @@ class LinebotController < ApplicationController
               # 曜日の決定
               collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
               # 周期の決定
-              now_week_num = Date.today.strftime('%W').to_i
+              now_week_num = Time.zone.today.strftime('%W').to_i
               cycle_name = case @user.messages[-1].text
-              when '1'; :every_week
-              when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
-              when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
-              when '4'; :first_and_third
-              when '5'; :second_and_fourth
-              end
+                           when '1' then :every_week
+                           when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                           when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                           when '4' then :first_and_third
+                           when '5' then :second_and_fourth
+                           end
               cycle = Cycle.find_by(name: cycle_name)
 
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
-              @response +=  <<~EOS
+              @response += <<~TEXT
                 「#{@trash.name}」の収集日は「#{@trash.cycle.name_i18n}」の「#{collection_day.day_of_week_i18n}」だね！
                 登録したよ！
-              EOS
+              TEXT
               @user.top!
             else
               @response += "正しく入力してね！\n"
@@ -154,7 +152,7 @@ class LinebotController < ApplicationController
             @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
             trash = @user.trashes[text.to_i - 1] #=> ユーザーが選択したゴミ
 
-            @response +=  <<~EOS
+            @response += <<~TEXT
               「#{trash.name}」が選択されたよ！
               どの項目を編集する？
                 1: 収集物の名前
@@ -162,24 +160,25 @@ class LinebotController < ApplicationController
                 3: 曜日
                 4: #{trash.name}の登録を削除する
                 0: 編集をやめる
-            EOS
+            TEXT
 
             @user.which_item_to_edit!
 
           when 'which_item_to_edit'
-            if text =~ /^([1-3]|[１-３])$/
+            case text
+            when /^([1-3]|[１-３])$/
               @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
-              items = ['ゴミの名前', '周期', '曜日']
+              items = %w[ゴミの名前 周期 曜日]
               item = items[text.to_i - 1] #=> ユーザーが選択した項目
-              @response +=  "変更するのは「#{item}」だね！\n"
+              @response += "変更するのは「#{item}」だね！\n"
 
               case item
               when 'ゴミの名前'
-                @response +=  <<~EOS
+                @response += <<~TEXT
                   どんな名前にする？（例）燃えないゴミ
-                EOS
+                TEXT
               when '周期'
-                @response +=  <<~EOS
+                @response += <<~TEXT
                   周期をどれに変更する？
                     1: 毎週
                     2: 今週から隔週
@@ -187,9 +186,9 @@ class LinebotController < ApplicationController
                     4: 第１・３
                     5: 第２・４
                     0: やめる
-                EOS
+                TEXT
               when '曜日'
-                @response +=  <<~EOS
+                @response += <<~TEXT
                   収集日をいつに変更する？
                     1: 月曜日
                     2: 火曜日
@@ -199,17 +198,17 @@ class LinebotController < ApplicationController
                     6: 土曜日
                     7: 日曜日
                     0: やめる
-                EOS
+                TEXT
               end
 
               @user.edit_complete!
-            elsif text =~ /^(4|４)$/
-              @response +=  <<~EOS
+            when /^(4|４)$/
+              @response += <<~TEXT
                 本当に削除してよろしいですか？
                 元には戻せません。
                   1: 削除を実行する
                   0: 中止する
-              EOS
+              TEXT
 
               @user.delete_confirm!
             else
@@ -221,51 +220,49 @@ class LinebotController < ApplicationController
             two_pre_message = @user.messages[-2].text
             @trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
             # 変更するゴミの項目 item を決定する
-            items = ['ゴミの名前', '周期', '曜日']
+            items = %w[ゴミの名前 周期 曜日]
             one_pre_message = @user.messages[-1].text #=> 項目番号
             item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
-
-            # 変更操作
-            case item
-            when 'ゴミの名前'
-              @trash.update!(name: text)
-              edit_complete
-            when '周期'
-              if text =~ /^[1-4]$/
-                # 周期の決定
-                now_week_num = Date.today.strftime('%W').to_i
-                cycle_name = case text
-                when '1'; :every_week
-                when '2'; now_week_num.even? ? :even_weeks : :odd_weeks
-                when '3'; now_week_num.odd? ? :even_weeks : :odd_weeks
-                when '4'; :first_and_third
-                when '5'; :second_and_fourth
-                end
-
-                @trash.cycle.update!(name: cycle_name)
-                edit_complete
-              else
-                @response += "正しく入力してね！\n"
-              end
-            when '曜日'
-              if text =~ /^[1-7]$/
-                @trash.latest_collection_day.update!(day_of_week: text.to_i)
-                edit_complete
-              else
-                @response += "正しく入力してね！\n"
-              end
-            end
-
-            def edit_complete
-              @response += <<~EOS
+            edit_complete = lambda {
+              @response += <<~TEXT
                 編集完了したよ！
                 新しい登録内容は、
                   #{@trash.name}
                   #{@trash.cycle.name_i18n}
                   #{@trash.latest_collection_day.day_of_week_i18n}
                 だよ！\n
-              EOS
+              TEXT
               @user.top!
+            }
+            # 変更操作
+            case item
+            when 'ゴミの名前'
+              @trash.update!(name: text)
+              edit_complete.call
+            when '周期'
+              if text =~ /^[1-4]$/
+                # 周期の決定
+                now_week_num = Time.zone.today.strftime('%W').to_i
+                cycle_name = case text
+                             when '1' then :every_week
+                             when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                             when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                             when '4' then :first_and_third
+                             when '5' then :second_and_fourth
+                             end
+
+                @trash.cycle.update!(name: cycle_name)
+                edit_complete.call
+              else
+                @response += "正しく入力してね！\n"
+              end
+            when '曜日'
+              if text =~ /^[1-7]$/
+                @trash.latest_collection_day.update!(day_of_week: text.to_i)
+                edit_complete.call
+              else
+                @response += "正しく入力してね！\n"
+              end
             end
           when 'delete_confirm'
             if text =~ /^(1|１)$/
@@ -282,15 +279,15 @@ class LinebotController < ApplicationController
 
           if @user.top?
             # モード選択を問う
-            @response +=  <<~EOS
-                =============================
-                次はどうする？
-                ↓↓番号を選択↓↓
-                  1. ゴミの登録
-                  2. 登録内容の確認
-                  3. 登録内容の編集
-                  4. 次回のゴミ収集日の確認
-            EOS
+            @response += <<~TEXT
+              =============================
+              次はどうする？
+              ↓↓番号を選択↓↓
+                1. ゴミの登録
+                2. 登録内容の確認
+                3. 登録内容の編集
+                4. 次回のゴミ収集日の確認
+            TEXT
           end
 
           # @responseを組み立てた結果を返す

@@ -1,0 +1,17 @@
+inherit_from: .rubocop_todo.yml
+
+require: rubocop-rails
+AllCops:
+  Exclude:
+    - 'bin/*'
+    - 'config/**/*'
+    - 'db/**/*'
+    - 'test/**/*'
+    - 'config.ru'
+    - 'Rakefile'
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
