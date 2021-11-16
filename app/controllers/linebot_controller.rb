@@ -160,6 +160,7 @@ class LinebotController < ApplicationController
                 1: 収集物の名前
                 2: 周期
                 3: 曜日
+                4: #{trash.name}の登録を削除する
                 0: 編集をやめる
             EOS
 
@@ -202,6 +203,15 @@ class LinebotController < ApplicationController
               end
 
               @user.edit_complete!
+            elsif text =~ /^(4|４)$/
+              @response +=  <<~EOS
+                本当に削除してよろしいですか？
+                元には戻せません。
+                  1: 削除を実行する
+                  0: 中止する
+              EOS
+
+              @user.delete_confirm!
             else
               @response += "正しく入力してね！\n"
             end
@@ -256,6 +266,17 @@ class LinebotController < ApplicationController
                 だよ！\n
               EOS
               @user.top!
+            end
+          when 'delete_confirm'
+            if text =~ /^(1|１)$/
+              # 削除対象のゴミのインスタンス @trash を決定する
+              pre_message = @user.messages[-1].text
+              @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス
+              @trash.destroy!
+              @response += "削除が完了したよ！\n"
+              @user.top!
+            else
+              @response += "正しく入力してね！\n"
             end
           end
 
