@@ -1,5 +1,5 @@
 class Cycle < ApplicationRecord
-  has_one :trash
+  has_one :trash, dependent: :destroy
 
   enum name: {
     every_week: 1, # 毎週
