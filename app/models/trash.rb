@@ -1,7 +1,7 @@
 class Trash < ApplicationRecord
   belongs_to :user
   belongs_to :cycle
-  has_many :trash_collection_days
+  has_many :trash_collection_days, dependent: :destroy
   has_many :collection_days, through: :trash_collection_days
 
   scope :with_collection_days, -> { joins(:collection_days) }
