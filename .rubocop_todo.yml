@@ -1,0 +1,29 @@
+# クラスファイルが100行以上の時警告
+Metrics/ClassLength:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+# ネストが3より深い時警告
+Metrics/BlockNesting:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+Metrics/AbcSize:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'app/controllers/linebot_controller.rb'

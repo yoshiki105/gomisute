@@ -1,3 +1,5 @@
+inherit_from: .rubocop_todo.yml
+
 require: rubocop-rails
 AllCops:
   Exclude:
@@ -9,4 +11,7 @@ AllCops:
     - 'Rakefile'
 
 Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/Documentation:
   Enabled: false
