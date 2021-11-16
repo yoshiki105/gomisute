@@ -10,15 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_03_012529) do
+ActiveRecord::Schema.define(version: 2021_11_14_003543) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
-    t.integer "trash_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.integer "cycle"
-    t.index ["trash_id"], name: "index_collection_days_on_trash_id"
+  end
+
+  create_table "cycles", force: :cascade do |t|
+    t.integer "name", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "messages", force: :cascade do |t|
@@ -29,11 +32,22 @@ ActiveRecord::Schema.define(version: 2021_11_03_012529) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "trash_collection_days", force: :cascade do |t|
+    t.integer "trash_id", null: false
+    t.integer "collection_day_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["collection_day_id"], name: "index_trash_collection_days_on_collection_day_id"
+    t.index ["trash_id"], name: "index_trash_collection_days_on_trash_id"
+  end
+
   create_table "trashes", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "user_id", null: false
+    t.integer "cycle_id", null: false
+    t.index ["cycle_id"], name: "index_trashes_on_cycle_id"
     t.index ["user_id"], name: "index_trashes_on_user_id"
   end
 
@@ -44,7 +58,9 @@ ActiveRecord::Schema.define(version: 2021_11_03_012529) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  add_foreign_key "collection_days", "trashes"
   add_foreign_key "messages", "users"
+  add_foreign_key "trash_collection_days", "collection_days"
+  add_foreign_key "trash_collection_days", "trashes"
+  add_foreign_key "trashes", "cycles"
   add_foreign_key "trashes", "users"
 end

@@ -20,7 +20,7 @@ class User < ApplicationRecord
     trashes.map do |trash|
       [
         trash.name,
-        trash.latest_collection_day.cycle_i18n,
+        trash.cycle.name_i18n,
         trash.latest_collection_day.day_of_week_i18n
       ]
     end
