@@ -1,9 +1,6 @@
 require 'line/bot'
 
 class LinebotController < ApplicationController
-  # before_action :set_line, only: [:show, :edit, :update, :destroy]
-  # protect_from_forgery with: :null_session
-
   def client
     @client ||= Line::Bot::Client.new do |config|
       config.channel_id = ENV['LINE_CHANNEL_ID']
@@ -17,7 +14,7 @@ class LinebotController < ApplicationController
       type: 'text',
       text: text
     }
-    @response = client.push_message(user.line_id, message)
+    @response = client.push_message(user.line_id, message) # TODO: @@response に変更する
   end
 
   def callback
@@ -32,52 +29,50 @@ class LinebotController < ApplicationController
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
-          # 初回ユーザーなら登録する
           @user = User.find_or_create_by(line_id: event['source']['userId'])
-
-          # ここからレスポンス組立
+          # TODO: textを適切な変数に変更する.
+          #   replied_message, user_replied message, user_message
           text = event.message['text']
           @response = ''
 
-          # 0が送られたら、常にトップに戻る
+          # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
           @user.top! if text.eql?('0') || text.eql?('０')
-
-          # @user.mode の値で前回のやり取りを確認
+## リプライによる条件分岐開始 ##
           case @user.mode
           when 'top'
             case text
             when '0', '０'
               @response += "中止だね！\n"
             when '1', '１' # ゴミ登録
-              @response +=  <<~TEXT
+              @response += <<~TEXT
                 ゴミの登録だね！
                 何のゴミを登録する？一つだけ答えてね！
                 (例)燃えるゴミ
               TEXT
               @user.registration!
             when '2', '２' # 登録してあるゴミの一覧表示
-              @response +=  <<~TEXT
+              @response += <<~TEXT
                 登録内容の確認だね！
                 今登録している内容は以下の通りだよ！
                 #{@user.show_trashes}
               TEXT
-
             when '3', '３' # 内容編集
-              @response +=  <<~TEXT
+              @response += <<~TEXT
                 登録内容の編集だね！
                 どれを編集する？
                 #{@user.show_editable_trashes}
               TEXT
               @user.which_trash_to_edit!
-
             when '4', '４' # 次回確認
-              @response += "次回のゴミ収集日は、
-                燃えるゴミ
-                毎週
-                月曜日・木曜日
-              だよ！
-              当日の朝6時に通知するからね！
-              \n"
+              @response += <<~TEXT
+                ## この機能は未実装です ##
+                次回のゴミ収集日は、
+                  燃えるゴミ
+                  毎週
+                  月曜日・木曜日
+                だよ！
+                当日の朝6時に通知するからね！
+              TEXT
             else
               @response += "正しく入力してね！\n"
             end
@@ -97,12 +92,10 @@ class LinebotController < ApplicationController
                 7: 日曜日
                 0: ゴミの登録をやめる\n
             TEXT
-
             @user.add_day_of_week!
-          when 'add_day_of_week'
-            # 回収日複数は後で実装予定
+          when 'add_day_of_week' # TODO: 回収日複数の実装
             if text =~ /^[1-7]$/
-              @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+              @user.messages.create!(text: text) # TODO: メソッドにする => @user.save_message(text)
               trash_name = @user.messages[-2].text
 
               @response += <<~TEXT
@@ -114,21 +107,20 @@ class LinebotController < ApplicationController
                   5: 第２・４
                   0: やめる
               TEXT
-
               @user.add_cycle!
             else
               @response += "正しく入力してね！\n"
             end
           when 'add_cycle'
+            # TODO: 1-5に変更する
             if text =~ /^[1-4]$/
-              @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
-              # ゴミの名前の決定
+              @user.messages.create!(text: text)
               trash_name = @user.messages[-3].text
-              # 曜日の決定
+              # TODO: メソッドにする => @user.choose_day_of_week
               collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
-              # 周期の決定
               now_week_num = Time.zone.today.strftime('%W').to_i
-              cycle_name = case @user.messages[-1].text
+              # TODO: 命名更 => 登録予定の周期
+              cycle_name = case @user.messages[-1].text  # TODO: メソッドにする => @user.choose_cycle
                            when '1' then :every_week
                            when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
                            when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
@@ -136,11 +128,14 @@ class LinebotController < ApplicationController
                            when '5' then :second_and_fourth
                            end
               cycle = Cycle.find_by(name: cycle_name)
-
+              # FIXME: cycle=5を選ぶと、バリデーションに失敗する.
+              #   ActiveRecord::RecordInvalid (バリデーションに失敗しました: Cycle translation missing:
+              #   ja.activerecord.errors.models.trash.attributes.cycle.required):
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
               @response += <<~TEXT
-                「#{@trash.name}」の収集日は「#{@trash.cycle.name_i18n}」の「#{collection_day.day_of_week_i18n}」だね！
+                「#{@trash.name}」の収集日は
+                「#{@trash.cycle.name_i18n}」の「#{collection_day.day_of_week_i18n}」だね！
                 登録したよ！
               TEXT
               @user.top!
@@ -149,8 +144,8 @@ class LinebotController < ApplicationController
             end
           ### 編集モード ###
           when 'which_trash_to_edit'
-            @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
-            trash = @user.trashes[text.to_i - 1] #=> ユーザーが選択したゴミ
+            @user.messages.create!(text: text)
+            trash = @user.trashes[text.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
 
             @response += <<~TEXT
               「#{trash.name}」が選択されたよ！
@@ -161,15 +156,13 @@ class LinebotController < ApplicationController
                 4: #{trash.name}の登録を削除する
                 0: 編集をやめる
             TEXT
-
             @user.which_item_to_edit!
-
           when 'which_item_to_edit'
             case text
             when /^([1-3]|[１-３])$/
-              @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+              @user.messages.create!(text: text)
               items = %w[ゴミの名前 周期 曜日]
-              item = items[text.to_i - 1] #=> ユーザーが選択した項目
+              item = items[text.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
               @response += "変更するのは「#{item}」だね！\n"
 
               case item
@@ -200,7 +193,6 @@ class LinebotController < ApplicationController
                     0: やめる
                 TEXT
               end
-
               @user.edit_complete!
             when /^(4|４)$/
               @response += <<~TEXT
@@ -209,13 +201,12 @@ class LinebotController < ApplicationController
                   1: 削除を実行する
                   0: 中止する
               TEXT
-
               @user.delete_confirm!
             else
               @response += "正しく入力してね！\n"
             end
-
           when 'edit_complete'
+            # TODO: 命名を考える
             # 変更対象のゴミのインスタンス @trash を決定する
             two_pre_message = @user.messages[-2].text
             @trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
@@ -240,6 +231,7 @@ class LinebotController < ApplicationController
               @trash.update!(name: text)
               edit_complete.call
             when '周期'
+              # TODO: 1-5に変更する
               if text =~ /^[1-4]$/
                 # 周期の決定
                 now_week_num = Time.zone.today.strftime('%W').to_i
@@ -250,7 +242,9 @@ class LinebotController < ApplicationController
                              when '4' then :first_and_third
                              when '5' then :second_and_fourth
                              end
-
+                # FIXME: cycle=5を選ぶと、バリデーションに失敗する.
+                #   ActiveRecord::RecordInvalid (バリデーションに失敗しました: Cycle translation missing:
+                #   ja.activerecord.errors.models.trash.attributes.cycle.required):
                 @trash.cycle.update!(name: cycle_name)
                 edit_complete.call
               else
@@ -277,8 +271,8 @@ class LinebotController < ApplicationController
             end
           end
 
-          if @user.top?
-            # モード選択を問う
+## リプライによる条件分岐終了 ##
+          if @user.top? # TODO: 丸ごとメソッドにできそう
             @response += <<~TEXT
               =============================
               次はどうする？
@@ -290,8 +284,7 @@ class LinebotController < ApplicationController
             TEXT
           end
 
-          # @responseを組み立てた結果を返す
-          message = {
+          message = { # TODO: 命名変更 => response_message
             type: 'text',
             text: @response
           }
