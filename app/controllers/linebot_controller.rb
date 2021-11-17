@@ -34,7 +34,8 @@ class LinebotController < ApplicationController
           @@response = ''
 
           # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
-          @user.top! if replied_message.eql?('0') || replied_message.eql?('０')
+          @user.top! if replied_message.match(/^[0０]$/)
+        ## リプライによる条件分岐開始 ##
           case @user.mode
           when 'top'
             case replied_message
@@ -91,7 +92,7 @@ class LinebotController < ApplicationController
             TEXT
             @user.add_day_of_week!
           when 'add_day_of_week' # TODO: 回収日複数の実装
-            if replied_message =~ /^[1-7]$/
+            if replied_message.match(/^[1-7]$/)
               @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
               trash_name = @user.messages[-2].text
 
@@ -109,7 +110,7 @@ class LinebotController < ApplicationController
               @@response += "正しく入力してね！\n"
             end
           when 'add_cycle'
-            if replied_message =~ /^[1-5]$/
+            if replied_message.match(/^[1-5]$/)
               @user.messages.create!(text: replied_message)
               trash_name = @user.messages[-3].text
               # TODO: メソッドにする => @user.choose_day_of_week
@@ -224,7 +225,7 @@ class LinebotController < ApplicationController
               @trash.update!(name: replied_message)
               edit_complete.call
             when '周期'
-              if replied_message =~ /^[1-5]$/
+              if replied_message.match(/^[1-5]$/)
                 # 周期の決定
                 now_week_num = Time.zone.today.strftime('%W').to_i
                 cycle_name = case replied_message
@@ -240,7 +241,7 @@ class LinebotController < ApplicationController
                 @@response += "正しく入力してね！\n"
               end
             when '曜日'
-              if replied_message =~ /^[1-7]$/
+              if replied_message.match(/^[1-7]$/)
                 @trash.latest_collection_day.update!(day_of_week: replied_message.to_i)
                 edit_complete.call
               else
@@ -248,7 +249,7 @@ class LinebotController < ApplicationController
               end
             end
           when 'delete_confirm'
-            if replied_message =~ /^(1|１)$/
+            if replied_message.match(/^[1１]$/)
               # 削除対象のゴミのインスタンス @trash を決定する
               pre_message = @user.messages[-1].text
               @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス
@@ -260,7 +261,7 @@ class LinebotController < ApplicationController
             end
           end
 
-## リプライによる条件分岐終了 ##
+        ## リプライによる条件分岐終了 ##
           if @user.top? # TODO: 丸ごとメソッドにできそう
             @@response += <<~TEXT
               #{'=' * 15}
