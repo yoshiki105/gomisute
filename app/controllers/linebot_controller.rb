@@ -14,7 +14,7 @@ class LinebotController < ApplicationController
       type: 'text',
       text: text
     }
-    @response = client.push_message(user.line_id, message) # TODO: @@response に変更する
+    @@response = client.push_message(user.line_id, message) # TODO: @@response に変更する
   end
 
   def callback
@@ -31,7 +31,7 @@ class LinebotController < ApplicationController
         when Line::Bot::Event::MessageType::Text
           @user = User.find_or_create_by(line_id: event['source']['userId'])
           replied_message = event.message['text']
-          @response = ''
+          @@response = ''
 
           # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
           @user.top! if replied_message.eql?('0') || replied_message.eql?('０')
@@ -39,29 +39,29 @@ class LinebotController < ApplicationController
           when 'top'
             case replied_message
             when '0', '０'
-              @response += "中止だね！\n"
+              @@response += "中止だね！\n"
             when '1', '１' # ゴミ登録
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 ゴミの登録だね！
                 何のゴミを登録する？一つだけ答えてね！
                 (例)燃えるゴミ
               TEXT
               @user.registration!
             when '2', '２' # 登録してあるゴミの一覧表示
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 登録内容の確認だね！
                 今登録している内容は以下の通りだよ！
                 #{@user.show_trashes}
               TEXT
             when '3', '３' # 内容編集
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 登録内容の編集だね！
                 どれを編集する？
                 #{@user.show_editable_trashes}
               TEXT
               @user.which_trash_to_edit!
             when '4', '４' # 次回確認
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 ## この機能は未実装です ##
                 次回のゴミ収集日は、
                   燃えるゴミ
@@ -71,13 +71,13 @@ class LinebotController < ApplicationController
                 当日の朝6時に通知するからね！
               TEXT
             else
-              @response += "正しく入力してね！\n"
+              @@response += "正しく入力してね！\n"
             end
           ### 登録モード ###
           when 'registration'
             @user.messages.create!(text: replied_message) # ユーザーの返信内容をDBへ保存
 
-            @response += <<~TEXT
+            @@response += <<~TEXT
               「#{replied_message}」を登録するね！
               収集日はいつかな？
                 1: 月曜日
@@ -95,7 +95,7 @@ class LinebotController < ApplicationController
               @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
               trash_name = @user.messages[-2].text
 
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 次に、「#{trash_name}」の周期を教えてね！
                   1: 毎週
                   2: 今週から隔週
@@ -106,7 +106,7 @@ class LinebotController < ApplicationController
               TEXT
               @user.add_cycle!
             else
-              @response += "正しく入力してね！\n"
+              @@response += "正しく入力してね！\n"
             end
           when 'add_cycle'
             if replied_message =~ /^[1-5]$/
@@ -126,21 +126,21 @@ class LinebotController < ApplicationController
               cycle = Cycle.find_by(name: cycle_name)
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 「#{@trash.name}」の収集日は
                 「#{@trash.cycle.name_i18n}」の「#{collection_day.day_of_week_i18n}」だね！
                 登録したよ！
               TEXT
               @user.top!
             else
-              @response += "正しく入力してね！\n"
+              @@response += "正しく入力してね！\n"
             end
           ### 編集モード ###
           when 'which_trash_to_edit'
             @user.messages.create!(text: replied_message)
             trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
 
-            @response += <<~TEXT
+            @@response += <<~TEXT
               「#{trash.name}」が選択されたよ！
               どの項目を編集する？
                 1: 収集物の名前
@@ -156,15 +156,15 @@ class LinebotController < ApplicationController
               @user.messages.create!(text: replied_message)
               items = %w[ゴミの名前 周期 曜日]
               item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
-              @response += "変更するのは「#{item}」だね！\n"
+              @@response += "変更するのは「#{item}」だね！\n"
 
               case item
               when 'ゴミの名前'
-                @response += <<~TEXT
+                @@response += <<~TEXT
                   どんな名前にする？（例）燃えないゴミ
                 TEXT
               when '周期'
-                @response += <<~TEXT
+                @@response += <<~TEXT
                   周期をどれに変更する？
                     1: 毎週
                     2: 今週から隔週
@@ -174,7 +174,7 @@ class LinebotController < ApplicationController
                     0: やめる
                 TEXT
               when '曜日'
-                @response += <<~TEXT
+                @@response += <<~TEXT
                   収集日をいつに変更する？
                     1: 月曜日
                     2: 火曜日
@@ -188,7 +188,7 @@ class LinebotController < ApplicationController
               end
               @user.edit_complete!
             when /^(4|４)$/
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 本当に削除してよろしいですか？
                 元には戻せません。
                   1: 削除を実行する
@@ -196,7 +196,7 @@ class LinebotController < ApplicationController
               TEXT
               @user.delete_confirm!
             else
-              @response += "正しく入力してね！\n"
+              @@response += "正しく入力してね！\n"
             end
           when 'edit_complete'
             # TODO: 命名を考える
@@ -208,7 +208,7 @@ class LinebotController < ApplicationController
             one_pre_message = @user.messages[-1].text #=> 項目番号
             item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
             edit_complete = lambda {
-              @response += <<~TEXT
+              @@response += <<~TEXT
                 編集完了したよ！
                 新しい登録内容は、
                   #{@trash.name}
@@ -237,14 +237,14 @@ class LinebotController < ApplicationController
                 @trash.cycle.update!(name: cycle_name)
                 edit_complete.call
               else
-                @response += "正しく入力してね！\n"
+                @@response += "正しく入力してね！\n"
               end
             when '曜日'
               if replied_message =~ /^[1-7]$/
                 @trash.latest_collection_day.update!(day_of_week: replied_message.to_i)
                 edit_complete.call
               else
-                @response += "正しく入力してね！\n"
+                @@response += "正しく入力してね！\n"
               end
             end
           when 'delete_confirm'
@@ -253,16 +253,16 @@ class LinebotController < ApplicationController
               pre_message = @user.messages[-1].text
               @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス
               @trash.destroy!
-              @response += "削除が完了したよ！\n"
+              @@response += "削除が完了したよ！\n"
               @user.top!
             else
-              @response += "正しく入力してね！\n"
+              @@response += "正しく入力してね！\n"
             end
           end
 
 ## リプライによる条件分岐終了 ##
           if @user.top? # TODO: 丸ごとメソッドにできそう
-            @response += <<~TEXT
+            @@response += <<~TEXT
               #{'=' * 15}
               次はどうする？
               ↓↓番号を選択↓↓
@@ -275,7 +275,7 @@ class LinebotController < ApplicationController
 
           message = { # TODO: 命名変更 => response_message
             type: 'text',
-            text: @response
+            text: @@response
           }
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
