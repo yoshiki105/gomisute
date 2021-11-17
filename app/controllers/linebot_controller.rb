@@ -30,17 +30,14 @@ class LinebotController < ApplicationController
         case event.type
         when Line::Bot::Event::MessageType::Text
           @user = User.find_or_create_by(line_id: event['source']['userId'])
-          # TODO: textを適切な変数に変更する.
-          #   replied_message, user_replied message, user_message
-          text = event.message['text']
+          replied_message = event.message['text']
           @response = ''
 
           # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
-          @user.top! if text.eql?('0') || text.eql?('０')
-## リプライによる条件分岐開始 ##
+          @user.top! if replied_message.eql?('0') || replied_message.eql?('０')
           case @user.mode
           when 'top'
-            case text
+            case replied_message
             when '0', '０'
               @response += "中止だね！\n"
             when '1', '１' # ゴミ登録
@@ -78,10 +75,10 @@ class LinebotController < ApplicationController
             end
           ### 登録モード ###
           when 'registration'
-            @user.messages.create!(text: text) # ユーザーの返信内容をDBへ保存
+            @user.messages.create!(text: replied_message) # ユーザーの返信内容をDBへ保存
 
             @response += <<~TEXT
-              「#{text}」を登録するね！
+              「#{replied_message}」を登録するね！
               収集日はいつかな？
                 1: 月曜日
                 2: 火曜日
@@ -94,8 +91,8 @@ class LinebotController < ApplicationController
             TEXT
             @user.add_day_of_week!
           when 'add_day_of_week' # TODO: 回収日複数の実装
-            if text =~ /^[1-7]$/
-              @user.messages.create!(text: text) # TODO: メソッドにする => @user.save_message(text)
+            if replied_message =~ /^[1-7]$/
+              @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
               trash_name = @user.messages[-2].text
 
               @response += <<~TEXT
@@ -112,8 +109,8 @@ class LinebotController < ApplicationController
               @response += "正しく入力してね！\n"
             end
           when 'add_cycle'
-            if text =~ /^[1-5]$/
-              @user.messages.create!(text: text)
+            if replied_message =~ /^[1-5]$/
+              @user.messages.create!(text: replied_message)
               trash_name = @user.messages[-3].text
               # TODO: メソッドにする => @user.choose_day_of_week
               collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
@@ -140,8 +137,8 @@ class LinebotController < ApplicationController
             end
           ### 編集モード ###
           when 'which_trash_to_edit'
-            @user.messages.create!(text: text)
-            trash = @user.trashes[text.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
+            @user.messages.create!(text: replied_message)
+            trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
 
             @response += <<~TEXT
               「#{trash.name}」が選択されたよ！
@@ -154,11 +151,11 @@ class LinebotController < ApplicationController
             TEXT
             @user.which_item_to_edit!
           when 'which_item_to_edit'
-            case text
+            case replied_message
             when /^([1-3]|[１-３])$/
-              @user.messages.create!(text: text)
+              @user.messages.create!(text: replied_message)
               items = %w[ゴミの名前 周期 曜日]
-              item = items[text.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
+              item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
               @response += "変更するのは「#{item}」だね！\n"
 
               case item
@@ -224,13 +221,13 @@ class LinebotController < ApplicationController
             # 変更操作
             case item
             when 'ゴミの名前'
-              @trash.update!(name: text)
+              @trash.update!(name: replied_message)
               edit_complete.call
             when '周期'
-              if text =~ /^[1-5]$/
+              if replied_message =~ /^[1-5]$/
                 # 周期の決定
                 now_week_num = Time.zone.today.strftime('%W').to_i
-                cycle_name = case text
+                cycle_name = case replied_message
                              when '1' then :every_week
                              when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
                              when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
@@ -243,15 +240,15 @@ class LinebotController < ApplicationController
                 @response += "正しく入力してね！\n"
               end
             when '曜日'
-              if text =~ /^[1-7]$/
-                @trash.latest_collection_day.update!(day_of_week: text.to_i)
+              if replied_message =~ /^[1-7]$/
+                @trash.latest_collection_day.update!(day_of_week: replied_message.to_i)
                 edit_complete.call
               else
                 @response += "正しく入力してね！\n"
               end
             end
           when 'delete_confirm'
-            if text =~ /^(1|１)$/
+            if replied_message =~ /^(1|１)$/
               # 削除対象のゴミのインスタンス @trash を決定する
               pre_message = @user.messages[-1].text
               @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス
