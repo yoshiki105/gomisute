@@ -32,10 +32,10 @@ class User < ApplicationRecord
     str = ''
     if trashes.present?
       trashes_lists.each do |trashes_list|
-        str << "=============================\n"
+        str << "#{'=' * 15}\n"
         trashes_list.each { |line| str << ("#{line}\n") }
       end
-      str << "=============================\n"
+      str << "#{'=' * 15}\n"
     else
       str << "登録しているゴミはありません.\n"
     end
@@ -47,11 +47,11 @@ class User < ApplicationRecord
       str = ''
 
       trashes_lists.each.with_index(1) do |trashes_list, index|
-        str << "=============================\n#{index}:\n"
+        str << "#{'=' * 15}\n#{index}:\n"
         trashes_list.each { |line| str << "  #{line}\n" }
       end
 
-      str << "=============================\n0: 編集を中止する"
+      str << "#{'=' * 15}\n0: 編集を中止する"
     else
       "登録しているゴミはありません.\n"
     end
