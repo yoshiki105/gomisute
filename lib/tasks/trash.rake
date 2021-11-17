@@ -15,12 +15,12 @@ namespace :trash do
       text = <<~TEXT
         本日はゴミ捨ての日です！
         以下を確認して捨てる準備しましょう！
-        ==============================
+        #{'=' * 15}
       TEXT
 
       trashes_name.each do |name|
         text << "#{name}\n"
-        text << "==============================\n"
+        text << "#{'=' * 15}\n"
       end
 
       # userに通知を送る
