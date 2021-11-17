@@ -274,7 +274,7 @@ class LinebotController < ApplicationController
 ## リプライによる条件分岐終了 ##
           if @user.top? # TODO: 丸ごとメソッドにできそう
             @response += <<~TEXT
-              =============================
+              #{'=' * 15}
               次はどうする？
               ↓↓番号を選択↓↓
                 1. ゴミの登録
