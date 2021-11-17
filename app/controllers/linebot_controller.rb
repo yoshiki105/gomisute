@@ -112,8 +112,7 @@ class LinebotController < ApplicationController
               @response += "正しく入力してね！\n"
             end
           when 'add_cycle'
-            # TODO: 1-5に変更する
-            if text =~ /^[1-4]$/
+            if text =~ /^[1-5]$/
               @user.messages.create!(text: text)
               trash_name = @user.messages[-3].text
               # TODO: メソッドにする => @user.choose_day_of_week
@@ -128,9 +127,6 @@ class LinebotController < ApplicationController
                            when '5' then :second_and_fourth
                            end
               cycle = Cycle.find_by(name: cycle_name)
-              # FIXME: cycle=5を選ぶと、バリデーションに失敗する.
-              #   ActiveRecord::RecordInvalid (バリデーションに失敗しました: Cycle translation missing:
-              #   ja.activerecord.errors.models.trash.attributes.cycle.required):
               @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
 
               @response += <<~TEXT
@@ -231,8 +227,7 @@ class LinebotController < ApplicationController
               @trash.update!(name: text)
               edit_complete.call
             when '周期'
-              # TODO: 1-5に変更する
-              if text =~ /^[1-4]$/
+              if text =~ /^[1-5]$/
                 # 周期の決定
                 now_week_num = Time.zone.today.strftime('%W').to_i
                 cycle_name = case text
@@ -242,9 +237,6 @@ class LinebotController < ApplicationController
                              when '4' then :first_and_third
                              when '5' then :second_and_fourth
                              end
-                # FIXME: cycle=5を選ぶと、バリデーションに失敗する.
-                #   ActiveRecord::RecordInvalid (バリデーションに失敗しました: Cycle translation missing:
-                #   ja.activerecord.errors.models.trash.attributes.cycle.required):
                 @trash.cycle.update!(name: cycle_name)
                 edit_complete.call
               else
