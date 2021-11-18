@@ -265,17 +265,7 @@ def respond_to_user
         end
 
         ## リプライによる条件分岐終了 ##
-        if @user.top? # TODO: 丸ごとメソッドにできそう
-          @response += <<~TEXT
-            #{'=' * 15}
-            次はどうする？
-            ↓↓番号を選択↓↓
-              1. ゴミの登録
-              2. 登録内容の確認
-              3. 登録内容の編集
-              4. 次回のゴミ収集日の確認
-          TEXT
-        end
+        add_default_message if @user.top?
 
         reply_to_client(client, event['replyToken'], @response)
       when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
@@ -285,6 +275,18 @@ def respond_to_user
     end
   end
   head :ok
+end
+
+def add_default_message
+  @response += <<~TEXT
+    #{'=' * 15}
+    次はどうする？
+    ↓↓番号を選択↓↓
+      1. ゴミの登録
+      2. 登録内容の確認
+      3. 登録内容の編集
+      4. 次回のゴミ収集日の確認
+  TEXT
 end
 
 def reply_to_client(client, reply_token, message)
