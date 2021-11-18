@@ -277,19 +277,20 @@ def respond_to_user
           TEXT
         end
 
-        message = { # TODO: 命名変更 => response_message
-          type: 'text',
-          text: @response
-        }
-        client.reply_message(event['replyToken'], message)
+        reply_to_client(client, event['replyToken'], @response)
       when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-        message = {
-          type: 'text',
-          text: '画像や動画は対応してません。'
-        }
-        client.reply_message(event['replyToken'], message)
+        @response = '画像や動画は対応してません。'
+        reply_to_client(client, event['replyToken'], @response)
       end
     end
   end
   head :ok
+end
+
+def reply_to_client(client, reply_token, message)
+  response_message = {
+    type: 'text',
+    text: message
+  }
+  client.reply_message(reply_token, response_message)
 end
