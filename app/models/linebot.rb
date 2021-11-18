@@ -8,6 +8,11 @@ def client
   end
 end
 
+def validate_client_signature(body)
+  signature = request.env['HTTP_X_LINE_SIGNATURE']
+  head :bad_request unless client.validate_signature(body, signature)
+end
+
 def push(user, text)
   message = {
     type: 'text',
@@ -18,11 +23,9 @@ end
 
 def respond_to_user
   body = request.body.read
+  validate_client_signature(body)
 
-  signature = request.env['HTTP_X_LINE_SIGNATURE']
-  head :bad_request unless client.validate_signature(body, signature)
-
-  events = client.parse_events_from(body) # FIXME: bodyとsignatureをインスタンス変数にすれば、21~26行はbefore_actionにできる？
+  events = client.parse_events_from(body)
   events.each do |event|
     case event
     when Line::Bot::Event::Message
