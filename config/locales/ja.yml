@@ -17,5 +17,5 @@ ja:
         every_week: 毎週
         odd_weeks: 隔週(奇数週)
         even_weeks: 隔週(偶数週)
-        first_and_third: 第1・3
-        second_and_fourth: 第2・4
+        first_and_third: 毎月第1・第3週
+        second_and_fourth: 毎月第2・第4週
