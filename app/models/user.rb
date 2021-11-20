@@ -18,11 +18,11 @@ class User < ApplicationRecord
 
   # [[燃えるゴミ, 毎週, 月曜日], [燃えないゴミ, 隔週, 木曜日], ...] のような二次配列を返す
   def trashes_lists
-    trashes.map do |trash|
+    trashes.includes(:cycle, :collection_days).map do |trash|
       [
         trash.name,
         trash.cycle.name_i18n,
-        trash.latest_collection_day.day_of_week_i18n
+        trash.collection_days.map(&:day_of_week_i18n).join('・')
       ]
     end
   end
