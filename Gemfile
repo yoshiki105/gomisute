@@ -27,12 +27,12 @@ gem 'dotenv-rails'
 gem 'enum_help'
 gem 'line-bot-api'
 gem 'pry-rails'
+gem 'whenever', require: false
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'sqlite3', '~> 1.4'
-  gem 'whenever', require: false
 end
 
 group :development do
