@@ -1,5 +1,6 @@
 class LinebotController < ApplicationController
   def callback
-    respond_to_user
+    @linebot = Linebot.new(request: request)
+    @linebot.respond_to_user
   end
 end
