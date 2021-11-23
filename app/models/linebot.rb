@@ -13,6 +13,5 @@ class Linebot
     events.each do |event|
       main_action(event)
     end
-    head :ok
   end
 end
