@@ -1,6 +1,8 @@
 class Cycle < ApplicationRecord
   has_one :trash, dependent: :destroy
 
+  validate :name_not_changed
+
   enum name: {
     every_week: 1, # 毎週
     odd_weeks: 2, # 奇数週
@@ -8,4 +10,12 @@ class Cycle < ApplicationRecord
     first_and_third: 4, # 第1・3
     second_and_fourth: 5 # 第2・4
   }
+
+  private
+
+  def name_not_changed
+    if name_changed? && self.persisted?
+      errors.add(:name, "Change of name not allowed!")
+    end
+  end
 end

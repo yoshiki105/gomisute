@@ -154,7 +154,7 @@ module LinebotEvent
                           when '4' then :first_and_third
                           when '5' then :second_and_fourth
                           end
-              @trash.cycle.update!(name: cycle_name)
+              @trash.cycle = Cycle.find_by(name: cycle_name)
               edit_complete.call
             else
               @response.add_alert_message
