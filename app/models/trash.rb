@@ -27,8 +27,8 @@ class Trash < ApplicationRecord
     with_collection_days.search_with_youbi(youbi).with_cycle.search_with_cycle(searching_cycles)
   }
 
-  def latest_collection_day
-    collection_days.order(created_at: :desc).first
+  def collection_days_list
+    collection_days.map(&:day_of_week_i18n).join('・')
   end
 
   def thrown_away?(day)
