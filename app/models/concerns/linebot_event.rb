@@ -35,7 +35,7 @@ module LinebotEvent
       case event.type
       when Line::Bot::Event::MessageType::Text
         @user = User.find_or_create_by(line_id: event['source']['userId'])
-        replied_message = event.message['text']
+        replied_message = event.message['text'].tr(' 　', '')
         # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
         @user.top! if replied_message.match(/^[0０]$/)
 
@@ -64,7 +64,9 @@ module LinebotEvent
           @response.add_day_of_week_message(replied_message)
           @user.add_day_of_week!
         when 'add_day_of_week' # TODO: 回収日複数の実装
-          if replied_message.match(/^[1-7]$/)
+          day_of_weeks = replied_message.chars.uniq
+
+          if day_of_weeks.count < 3 && day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
             @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
             trash_name = @user.messages[-2].text
             @response.add_cycle_message(trash_name)
@@ -77,7 +79,8 @@ module LinebotEvent
             @user.messages.create!(text: replied_message)
             trash_name = @user.messages[-3].text
             # TODO: メソッドにする => @user.choose_day_of_week
-            collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
+            day_of_weeks = @user.messages[-2].text.chars
+            collection_days = CollectionDay.find(day_of_weeks)
             now_week_num = Time.zone.today.strftime('%W').to_i
             # TODO: 命名更 => 登録予定の周期
             cycle_name = case @user.messages[-1].text # TODO: メソッドにする => @user.choose_cycle
@@ -88,7 +91,8 @@ module LinebotEvent
                         when '5' then :second_and_fourth
                         end
             cycle = Cycle.find_by(name: cycle_name)
-            @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
+            @trash = @user.trashes.create!(name: trash_name, cycle: cycle)
+            @trash.collection_days << collection_days
             @response.add_registration_completed_message(@trash)
             @user.top!
           else
