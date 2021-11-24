@@ -6,7 +6,8 @@ namespace :trash do
     date = todays_date.strftime('%-d') #=> "14" 今日の日付
     nansyu = (date.to_i - 1) / 7 + 1 #=> 2 今日が第何週か
     todays_trashes = Trash.throw_away(nansyu, youbi) # youbi, nansyuから、今日捨てるべきTrashのコレクションを作成
-    users = todays_trashes.group(:user_id).map(&:user) # 通知するべきUserのコレクションを作成
+    user_ids = todays_trashes.group(:user_id).pluck(:user_id)
+    users = User.find(user_ids) # 通知するべきUserのコレクションを作成
 
     # Userごとにtextを組み立てて通知を送る
     users.each do |user|
