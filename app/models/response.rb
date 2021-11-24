@@ -8,7 +8,7 @@ class Response < String
 
   def add_default_message
     self.text += <<~TEXT
-      #{'=' * 15}
+      \n#{'=' * 15}
       次はどうする？
       ↓↓番号を選択↓↓
         1. ゴミの登録
