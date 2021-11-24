@@ -35,25 +35,27 @@ module LinebotEvent
       case event.type
       when Line::Bot::Event::MessageType::Text
         @user = User.find_or_create_by(line_id: event['source']['userId'])
-        replied_message = event.message['text'].tr(' 　', '')
+        replied_message = event.message['text']
+                          .tr(" 　\r\n\t", '') # 空白の除去
+                          .tr('０-９', '0-9')  # 全角数字を半角に
         # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
-        @user.top! if replied_message.match(/^[0０]$/)
+        @user.top! if replied_message.match(/^0$/)
 
         ## リプライによる条件分岐開始 ##
         case @user.mode
         when 'top'
           case replied_message
-          when '0', '０'
+          when '0'
             @response.add_cancel_message
-          when '1', '１'
+          when '1'
             @response.add_asking_trash_name_message
             @user.registration!
-          when '2', '２'
+          when '2'
             @response.add_show_trashes_message(@user)
-          when '3', '３'
+          when '3'
             @response.add_edit_message(@user)
             @user.which_trash_to_edit!
-          when '4', '４'
+          when '4'
             @response.add_next_trash_colleciton_day_message
           else
             @response.add_alert_message
@@ -107,7 +109,7 @@ module LinebotEvent
           @user.which_item_to_edit!
         when 'which_item_to_edit'
           case replied_message
-          when /^([1-3]|[１-３])$/
+          when /^([1-3])$/
             @user.messages.create!(text: replied_message)
             items = %w[ゴミの名前 曜日 周期]
             item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
@@ -125,7 +127,7 @@ module LinebotEvent
               @response.add_cycle_message(trash.name)
             end
             @user.edit_complete!
-          when /^(4|４)$/
+          when '4'
             @response.add_delete_confirm_message
             @user.delete_confirm!
           else
@@ -175,7 +177,7 @@ module LinebotEvent
             end
           end
         when 'delete_confirm'
-          if replied_message.match(/^[1１]$/)
+          if replied_message.match(/^1$/)
             # 削除対象のゴミのインスタンス @trash を決定する
             pre_message = @user.messages[-1].text
             @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス
