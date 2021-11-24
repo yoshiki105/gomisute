@@ -107,7 +107,9 @@ module LinebotEvent
             @user.messages.create!(text: replied_message)
             items = %w[ゴミの名前 曜日 周期]
             item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
-            trash = @user.trashes[replied_message.to_i - 2] # ユーザーが選択したゴミ => TODO: 命名変更
+            # 変更対象のゴミのインスタンス trash を決定する
+            two_pre_message = @user.messages[-2].text
+            trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
             @response.add_edit_item_message(item)
 
             case item
@@ -155,6 +157,7 @@ module LinebotEvent
                           when '5' then :second_and_fourth
                           end
               @trash.cycle = Cycle.find_by(name: cycle_name)
+              @trash.save!
               edit_complete.call
             else
               @response.add_alert_message
