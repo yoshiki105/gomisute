@@ -101,14 +101,18 @@ module LinebotEvent
           end
         ### 編集モード ###
         when 'which_trash_to_edit'
-          @user.messages.create!(text: replied_message)
-          trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
+          if replied_message.match(/^[0-9]+$/) && @user.trashes[replied_message.to_i - 1]
+            @user.messages.create!(text: replied_message)
+            trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
 
-          @response.add_message_which_item_to_edit(trash)
-          @user.which_item_to_edit!
+            @response.add_message_which_item_to_edit(trash)
+            @user.which_item_to_edit!
+          else
+            @response.add_alert_message
+          end
         when 'which_item_to_edit'
           case replied_message
-          when /^([1-3])$/
+          when /^[1-3]$/
             @user.messages.create!(text: replied_message)
             items = %w[ゴミの名前 曜日 周期]
             item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
