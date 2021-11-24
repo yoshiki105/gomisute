@@ -169,8 +169,10 @@ module LinebotEvent
               @response.add_alert_message
             end
           when '曜日'
-            if replied_message.match(/^[1-7]$/)
-              @trash.collection_days = [CollectionDay.find(replied_message.to_i)]
+            day_of_weeks = replied_message.chars.uniq
+
+            if day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
+              @trash.collection_days = [CollectionDay.find(day_of_weeks)].flatten # flattenで配列の入れ子を防ぐ
               edit_complete.call
             else
               @response.add_alert_message
