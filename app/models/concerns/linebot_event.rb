@@ -68,7 +68,7 @@ module LinebotEvent
         when 'add_day_of_week' # TODO: 回収日複数の実装
           day_of_weeks = replied_message.chars.uniq
 
-          if day_of_weeks.count < 3 && day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
+          if day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
             @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
             trash_name = @user.messages[-2].text
             @response.add_cycle_message(trash_name)
@@ -93,8 +93,7 @@ module LinebotEvent
                         when '5' then :second_and_fourth
                         end
             cycle = Cycle.find_by(name: cycle_name)
-            @trash = @user.trashes.create!(name: trash_name, cycle: cycle)
-            @trash.collection_days << collection_days
+            @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_days].flatten)
             @response.add_registration_completed_message(@trash)
             @user.top!
           else
