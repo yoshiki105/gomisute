@@ -161,7 +161,7 @@ module LinebotEvent
             end
           when '曜日'
             if replied_message.match(/^[1-7]$/)
-              @trash.latest_collection_day.update!(day_of_week: replied_message.to_i)
+              @trash.collection_days = [CollectionDay.find(replied_message.to_i)]
               edit_complete.call
             else
               @response.add_alert_message
