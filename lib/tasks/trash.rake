@@ -24,7 +24,7 @@ namespace :trash do
       end
 
       # userに通知を送る
-      linebot = LinebotController.new
+      linebot = Linebot.new
       linebot.push(user, text)
     end
   end
