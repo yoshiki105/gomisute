@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_14_003543) do
+ActiveRecord::Schema.define(version: 2021_11_25_045026) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
@@ -30,6 +30,14 @@ ActiveRecord::Schema.define(version: 2021_11_14_003543) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["user_id"], name: "index_messages_on_user_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.integer "trash_id"
+    t.time "notify_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["trash_id"], name: "index_notifications_on_trash_id", unique: true
   end
 
   create_table "trash_collection_days", force: :cascade do |t|
@@ -59,6 +67,7 @@ ActiveRecord::Schema.define(version: 2021_11_14_003543) do
   end
 
   add_foreign_key "messages", "users"
+  add_foreign_key "notifications", "trashes"
   add_foreign_key "trash_collection_days", "collection_days"
   add_foreign_key "trash_collection_days", "trashes"
   add_foreign_key "trashes", "cycles"

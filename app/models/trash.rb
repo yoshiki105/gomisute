@@ -1,6 +1,7 @@
 class Trash < ApplicationRecord
   belongs_to :user
   belongs_to :cycle
+  has_one :notification, dependent: :destroy
   has_many :trash_collection_days, dependent: :destroy
   has_many :collection_days, through: :trash_collection_days
 
