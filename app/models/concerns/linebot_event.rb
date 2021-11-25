@@ -36,24 +36,26 @@ module LinebotEvent
       when Line::Bot::Event::MessageType::Text
         @user = User.find_or_create_by(line_id: event['source']['userId'])
         replied_message = event.message['text']
+                          .tr(" 　\r\n\t", '') # 空白の除去
+                          .tr('０-９', '0-9')  # 全角数字を半角に
         # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
-        @user.top! if replied_message.match(/^[0０]$/)
+        @user.top! if replied_message.match(/^0$/)
 
         ## リプライによる条件分岐開始 ##
         case @user.mode
         when 'top'
           case replied_message
-          when '0', '０'
+          when '0'
             @response.add_cancel_message
-          when '1', '１'
+          when '1'
             @response.add_asking_trash_name_message
             @user.registration!
-          when '2', '２'
+          when '2'
             @response.add_show_trashes_message(@user)
-          when '3', '３'
+          when '3'
             @response.add_edit_message(@user)
             @user.which_trash_to_edit!
-          when '4', '４'
+          when '4'
             @response.add_next_trash_colleciton_day_message
           else
             @response.add_alert_message
@@ -64,7 +66,9 @@ module LinebotEvent
           @response.add_day_of_week_message(replied_message)
           @user.add_day_of_week!
         when 'add_day_of_week' # TODO: 回収日複数の実装
-          if replied_message.match(/^[1-7]$/)
+          day_of_weeks = replied_message.chars.uniq
+
+          if day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
             @user.messages.create!(text: replied_message) # TODO: メソッドにする => @user.save_message(replied_message)
             trash_name = @user.messages[-2].text
             @response.add_cycle_message(trash_name)
@@ -77,7 +81,8 @@ module LinebotEvent
             @user.messages.create!(text: replied_message)
             trash_name = @user.messages[-3].text
             # TODO: メソッドにする => @user.choose_day_of_week
-            collection_day = CollectionDay.find_by(day_of_week: @user.messages[-2].text)
+            day_of_weeks = @user.messages[-2].text.chars
+            collection_days = CollectionDay.find(day_of_weeks)
             now_week_num = Time.zone.today.strftime('%W').to_i
             # TODO: 命名更 => 登録予定の周期
             cycle_name = case @user.messages[-1].text # TODO: メソッドにする => @user.choose_cycle
@@ -88,7 +93,7 @@ module LinebotEvent
                         when '5' then :second_and_fourth
                         end
             cycle = Cycle.find_by(name: cycle_name)
-            @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_day])
+            @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_days].flatten)
             @response.add_registration_completed_message(@trash)
             @user.top!
           else
@@ -96,14 +101,18 @@ module LinebotEvent
           end
         ### 編集モード ###
         when 'which_trash_to_edit'
-          @user.messages.create!(text: replied_message)
-          trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
+          if replied_message.match(/^[0-9]+$/) && @user.trashes[replied_message.to_i - 1]
+            @user.messages.create!(text: replied_message)
+            trash = @user.trashes[replied_message.to_i - 1] # ユーザーが選択したゴミ => TODO: 命名変更
 
-          @response.add_message_which_item_to_edit(trash)
-          @user.which_item_to_edit!
+            @response.add_message_which_item_to_edit(trash)
+            @user.which_item_to_edit!
+          else
+            @response.add_alert_message
+          end
         when 'which_item_to_edit'
           case replied_message
-          when /^([1-3]|[１-３])$/
+          when /^[1-3]$/
             @user.messages.create!(text: replied_message)
             items = %w[ゴミの名前 曜日 周期]
             item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
@@ -121,7 +130,7 @@ module LinebotEvent
               @response.add_cycle_message(trash.name)
             end
             @user.edit_complete!
-          when /^(4|４)$/
+          when '4'
             @response.add_delete_confirm_message
             @user.delete_confirm!
           else
@@ -163,15 +172,17 @@ module LinebotEvent
               @response.add_alert_message
             end
           when '曜日'
-            if replied_message.match(/^[1-7]$/)
-              @trash.collection_days = [CollectionDay.find(replied_message.to_i)]
+            day_of_weeks = replied_message.chars.uniq
+
+            if day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
+              @trash.collection_days = [CollectionDay.find(day_of_weeks)].flatten # flattenで配列の入れ子を防ぐ
               edit_complete.call
             else
               @response.add_alert_message
             end
           end
         when 'delete_confirm'
-          if replied_message.match(/^[1１]$/)
+          if replied_message.match(/^1$/)
             # 削除対象のゴミのインスタンス @trash を決定する
             pre_message = @user.messages[-1].text
             @trash = @user.trashes[pre_message.to_i - 1] #=> 変更するゴミのインスタンス

@@ -57,6 +57,9 @@ class Response < String
   def add_day_of_week_message(trash_name)
     self.text += <<~TEXT
       「#{trash_name}」の収集日はいつにする？
+      週2回捨てるゴミは、2つつなげて送ってね！
+        月曜・木曜のときの例 => 1 4
+      #{'=' * 15}
         1: 月曜日
         2: 火曜日
         3: 水曜日
@@ -83,7 +86,7 @@ class Response < String
   def add_registration_completed_message(trash)
     self.text += <<~TEXT
       「#{trash.name}」の収集日は
-      「#{trash.cycle.name_i18n}」の「#{trash.latest_collection_day.day_of_week_i18n}」だね！
+      「#{trash.cycle.name_i18n}」の「#{trash.collection_days_list}」だね！
       登録したよ！
     TEXT
   end
@@ -119,7 +122,7 @@ class Response < String
       新しい登録内容は、
         #{trash.name}
         #{trash.cycle.name_i18n}
-        #{trash.latest_collection_day.day_of_week_i18n}
+        #{trash.collection_days_list}
       だよ！\n
     TEXT
   end

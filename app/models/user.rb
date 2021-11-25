@@ -22,7 +22,7 @@ class User < ApplicationRecord
       [
         trash.name,
         trash.cycle.name_i18n,
-        trash.collection_days.map(&:day_of_week_i18n).join('・')
+        trash.collection_days_list
       ]
     end
   end
