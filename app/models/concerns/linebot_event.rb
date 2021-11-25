@@ -80,6 +80,16 @@ module LinebotEvent
           if replied_message.match(/^[1-5]$/)
             @user.messages.create!(text: replied_message)
             trash_name = @user.messages[-3].text
+            @response.add_notification_message(trash_name)
+            @user.add_notification!
+          else
+            @response.add_alert_message
+          end
+        when 'add_notification'
+          replied_message.gsub!(/時|分|半/, '時' => ':', '分' => '', '半' => '30')
+          # 00:00-23:50のフォーマットに則っているかどうかの判定
+          if replied_message.match(/^([01]?[0-9]|2[0-3]):[0-5]0$/)
+            trash_name = @user.messages[-3].text
             # TODO: メソッドにする => @user.choose_day_of_week
             day_of_weeks = @user.messages[-2].text.chars
             collection_days = CollectionDay.find(day_of_weeks)
@@ -93,7 +103,12 @@ module LinebotEvent
                         when '5' then :second_and_fourth
                         end
             cycle = Cycle.find_by(name: cycle_name)
-            @trash = @user.trashes.create!(name: trash_name, cycle: cycle, collection_days: [collection_days].flatten)
+            @trash = @user.trashes.create!(
+              name: trash_name,
+              cycle: cycle,
+              collection_days: [collection_days].flatten,
+            )
+            Notification.create!(trash: @trash, notify_at: replied_message)
             @response.add_registration_completed_message(@trash)
             @user.top!
           else

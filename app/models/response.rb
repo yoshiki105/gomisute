@@ -83,11 +83,24 @@ class Response < String
     TEXT
   end
 
+  def add_notification_message(trash_name)
+    self.text += <<~TEXT
+      「#{trash_name}」は何時に通知する？
+      10分単位で設定できるよ！
+        (例1)6:40
+        (例2)7時20分
+        (例3)8時半
+
+        0: ゴミの登録をやめる
+    TEXT
+  end
+
   def add_registration_completed_message(trash)
     self.text += <<~TEXT
-      「#{trash.name}」の収集日は
-      「#{trash.cycle.name_i18n}」の「#{trash.collection_days_list}」だね！
       登録したよ！
+      「#{trash.name}」の収集日は
+      「#{trash.cycle.name_i18n}」の「#{trash.collection_days_list}」
+      「#{I18n.l trash.notification.notify_at}」に通知するからね！
     TEXT
   end
 
