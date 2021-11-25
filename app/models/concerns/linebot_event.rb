@@ -127,9 +127,9 @@ module LinebotEvent
           end
         when 'which_item_to_edit'
           case replied_message
-          when /^[1-3]$/
+          when /^[1-4]$/
             @user.messages.create!(text: replied_message)
-            items = %w[ゴミの名前 曜日 周期]
+            items = %w[ゴミの名前 曜日 周期 通知時刻]
             item = items[replied_message.to_i - 1] #=> ユーザーが選択した項目 TODO: 命名変更
             # 変更対象のゴミのインスタンス trash を決定する
             two_pre_message = @user.messages[-2].text
@@ -143,9 +143,11 @@ module LinebotEvent
               @response.add_day_of_week_message(trash.name)
             when '周期'
               @response.add_cycle_message(trash.name)
+            when '通知時刻'
+              @response.add_notification_message(trash.name)
             end
             @user.edit_complete!
-          when '4'
+          when '9'
             @response.add_delete_confirm_message
             @user.delete_confirm!
           else
@@ -157,7 +159,7 @@ module LinebotEvent
           two_pre_message = @user.messages[-2].text
           @trash = @user.trashes[two_pre_message.to_i - 1] #=> 変更するゴミのインスタンス
           # 変更するゴミの項目 item を決定する
-          items = %w[ゴミの名前 曜日 周期]
+          items = %w[ゴミの名前 曜日 周期 通知時刻]
           one_pre_message = @user.messages[-1].text #=> 項目番号
           item = items[one_pre_message.to_i - 1] #=> 変更するゴミの項目
           edit_complete = lambda { # TODO: lambdaの必要ある？
@@ -191,6 +193,18 @@ module LinebotEvent
 
             if day_of_weeks.all? { |str| str.match(/^[1-7]$/) }
               @trash.collection_days = [CollectionDay.find(day_of_weeks)].flatten # flattenで配列の入れ子を防ぐ
+              edit_complete.call
+            else
+              @response.add_alert_message
+            end
+          when '通知時刻'
+            replied_message.gsub!(/時|分|半/, '時' => ':', '分' => '', '半' => '30')
+            # 00:00-23:50のフォーマットに則っているかどうかの判定
+            if replied_message.match(/^([01]?[0-9]|2[0-3]):[0-5]0$/)
+              Notification.transaction do
+                @trash.notification.destroy!
+                Notification.create!(trash: @trash, notify_at: replied_message)
+              end
               edit_complete.call
             else
               @response.add_alert_message
