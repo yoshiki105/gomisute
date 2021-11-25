@@ -16,7 +16,7 @@ namespace :trash do
     end
 
     # Userごとにtextを組み立てて通知を送る
-    users.each do |user|
+    users&.each do |user|
       trashes_name = todays_trashes.search_with_user(user).pluck(:name)
 
       text = <<~TEXT
