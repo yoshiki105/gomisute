@@ -1,11 +1,13 @@
 namespace :trash do
   desc '今日捨てるゴミがあるかどうかチェックする'
   task :check_today, ['test'] => :environment do |_, args|
+    now_at = Time.current.floor(10.minutes).to_s(:time)
     todays_date = Time.zone.today
     youbi = todays_date.strftime('%A').downcase #=> "sunday" 今日の曜日
     date = todays_date.strftime('%-d') #=> "14" 今日の日付
     nansyu = (date.to_i - 1) / 7 + 1 #=> 2 今日が第何週か
-    todays_trashes = Trash.throw_away(nansyu, youbi) # youbi, nansyuから、今日捨てるべきTrashのコレクションを作成
+    # youbi, nansyu, now_atから今日捨てるべきTrashのコレクションを作成
+    todays_trashes = Trash.throw_away(nansyu, youbi, now_at)
 
     # 通知テストの時
     if args['test']

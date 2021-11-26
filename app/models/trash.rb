@@ -7,10 +7,12 @@ class Trash < ApplicationRecord
 
   scope :with_collection_days, -> { joins(:collection_days) }
   scope :with_cycle, -> { joins(:cycle) }
+  scope :with_notification, -> { joins(:notification) }
   scope :search_with_youbi, ->(youbi) { where(collection_days: { day_of_week: youbi }) }
   scope :search_with_cycle, ->(cycle) { where(cycles: { name: cycle }) }
   scope :search_with_user, ->(user) { where(user_id: user.id) }
-  scope :throw_away, lambda { |nansyu, youbi|
+  scope :search_with_notify_at, ->(notify_at) { where(notification: { notify_at: notify_at }) }
+  scope :throw_away, lambda { |nansyu, youbi, now_at|
     searching_cycles = case nansyu
                        when 1, 3
                          %i[every_week first_and_third]
@@ -25,7 +27,11 @@ class Trash < ApplicationRecord
     # 奇数ならodd_weeksを、そうでないならeven_weeksを追加する
     searching_cycles << (now_week_num.even? ? :even_weeks : :odd_weeks)
 
-    with_collection_days.search_with_youbi(youbi).with_cycle.search_with_cycle(searching_cycles)
+    with_collection_days.search_with_youbi(youbi)
+                        .with_cycle
+                        .search_with_cycle(searching_cycles)
+                        .with_notification
+                        .search_with_notify_at(now_at)
   }
 
   def collection_days_list
