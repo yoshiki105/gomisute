@@ -13,16 +13,18 @@ class User < ApplicationRecord
     which_trash_to_edit: 7,
     which_item_to_edit: 8,
     edit_complete: 9,
-    delete_confirm: 10
+    delete_confirm: 10,
+    add_notification: 11
   }
 
   # [[燃えるゴミ, 毎週, 月曜日], [燃えないゴミ, 隔週, 木曜日], ...] のような二次配列を返す
   def trashes_lists
-    trashes.includes(:cycle, :collection_days).map do |trash|
+    trashes.includes(:cycle, :collection_days, :notification).map do |trash|
       [
         trash.name,
         trash.cycle.name_i18n,
-        trash.collection_days_list
+        trash.collection_days_list,
+        "#{I18n.l trash.notification.notify_at}に通知"
       ]
     end
   end

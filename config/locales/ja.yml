@@ -19,3 +19,7 @@ ja:
         even_weeks: 隔週(偶数週)
         first_and_third: 毎月第1・第3週
         second_and_fourth: 毎月第2・第4週
+  time:
+    formats:
+      default: "%H時%M分"
+      short: "%H:%M"
