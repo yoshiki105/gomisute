@@ -10,11 +10,10 @@ class Response < String
     self.text += <<~TEXT
       \n#{'=' * 15}
       次はどうする？
-      ↓↓番号を選択↓↓
+      ↓↓1~3の番号を選んで送信↓↓
         1. ゴミの登録
         2. 登録内容の確認
         3. 登録内容の編集
-        4. 次回のゴミ収集日の確認
     TEXT
   end
 
@@ -38,19 +37,6 @@ class Response < String
       登録内容の編集だね！
       どれを編集する？
       #{user.show_editable_trashes}
-    TEXT
-  end
-
-  def add_next_trash_colleciton_day_message
-    self.text += <<~TEXT
-      ## この機能は未実装です ##
-      ↓↓以下、やりたいことのイメージ↓↓
-      次回のゴミ収集日は、
-        燃えるゴミ
-        毎週
-        月曜日・木曜日
-      だよ！
-      当日の朝6時に通知するからね！
     TEXT
   end
 

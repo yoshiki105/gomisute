@@ -55,8 +55,6 @@ module LinebotEvent
           when '3'
             @response.add_edit_message(@user)
             @user.which_trash_to_edit!
-          when '4'
-            @response.add_next_trash_colleciton_day_message
           else
             @response.add_alert_message
           end
