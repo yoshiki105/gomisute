@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_25_045026) do
+ActiveRecord::Schema.define(version: 2021_12_02_013154) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
@@ -61,7 +61,7 @@ ActiveRecord::Schema.define(version: 2021_11_25_045026) do
 
   create_table "users", force: :cascade do |t|
     t.string "line_id", null: false
-    t.integer "mode", default: 0, null: false
+    t.integer "status", default: 0, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

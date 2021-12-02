@@ -42,7 +42,7 @@ module LinebotEvent
         @user.top! if replied_message.match(/^0$/)
 
         ## リプライによる条件分岐開始 ##
-        case @user.mode
+        case @user.status
         when 'top'
           case replied_message
           when '0'
