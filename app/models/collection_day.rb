@@ -19,8 +19,6 @@ class CollectionDay < ApplicationRecord
   private
 
   def day_of_week_not_changed
-    if day_of_week_changed? && self.persisted?
-      errors.add(:day_of_week, "Change of day_of_week not allowed!")
-    end
+    errors.add(:day_of_week, 'Change of day_of_week not allowed!') if day_of_week_changed? && persisted?
   end
 end

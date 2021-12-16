@@ -1,5 +1,5 @@
 class Cycle < ApplicationRecord
-  has_one :trash, dependent: :destroy
+  has_many :trashes, dependent: :destroy
 
   validate :name_not_changed
 
@@ -14,8 +14,6 @@ class Cycle < ApplicationRecord
   private
 
   def name_not_changed
-    if name_changed? && self.persisted?
-      errors.add(:name, "Change of name not allowed!")
-    end
+    errors.add(:name, 'Change of name not allowed!') if name_changed? && persisted?
   end
 end
