@@ -14,8 +14,6 @@ class Cycle < ApplicationRecord
   private
 
   def name_not_changed
-    if name_changed? && self.persisted?
-      errors.add(:name, "Change of name not allowed!")
-    end
+    errors.add(:name, 'Change of name not allowed!') if name_changed? && persisted?
   end
 end

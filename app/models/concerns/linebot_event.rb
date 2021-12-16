@@ -36,8 +36,8 @@ module LinebotEvent
       when Line::Bot::Event::MessageType::Text
         @user = User.find_or_create_by(line_id: event['source']['userId'])
         replied_message = event.message['text']
-                          .tr(" 　\r\n\t", '') # 空白の除去
-                          .tr('０-９', '0-9')  # 全角数字を半角に
+                               .tr(" 　\r\n\t", '') # 空白の除去
+                               .tr('０-９', '0-9') # 全角数字を半角に
         # 0が送られたら、常にトップに戻る TODO: メソッドに切り出す
         @user.top! if replied_message.match(/^0$/)
 
@@ -94,17 +94,17 @@ module LinebotEvent
             now_week_num = Time.zone.today.strftime('%W').to_i
             # TODO: 命名更 => 登録予定の周期
             cycle_name = case @user.messages[-1].text # TODO: メソッドにする => @user.choose_cycle
-                        when '1' then :every_week
-                        when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
-                        when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
-                        when '4' then :first_and_third
-                        when '5' then :second_and_fourth
-                        end
+                         when '1' then :every_week
+                         when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                         when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                         when '4' then :first_and_third
+                         when '5' then :second_and_fourth
+                         end
             cycle = Cycle.find_by(name: cycle_name)
             @trash = @user.trashes.create!(
               name: trash_name,
               cycle: cycle,
-              collection_days: [collection_days].flatten,
+              collection_days: [collection_days].flatten
             )
             Notification.create!(trash: @trash, notify_at: replied_message)
             @response.add_registration_completed_message(@trash)
@@ -174,12 +174,12 @@ module LinebotEvent
               # 周期の決定
               now_week_num = Time.zone.today.strftime('%W').to_i
               cycle_name = case replied_message
-                          when '1' then :every_week
-                          when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
-                          when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
-                          when '4' then :first_and_third
-                          when '5' then :second_and_fourth
-                          end
+                           when '1' then :every_week
+                           when '2' then now_week_num.even? ? :even_weeks : :odd_weeks
+                           when '3' then now_week_num.odd? ? :even_weeks : :odd_weeks
+                           when '4' then :first_and_third
+                           when '5' then :second_and_fourth
+                           end
               @trash.cycle = Cycle.find_by(name: cycle_name)
               @trash.save!
               edit_complete.call
