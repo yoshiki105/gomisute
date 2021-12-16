@@ -10,18 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_12_02_013154) do
+ActiveRecord::Schema.define(version: 2021_12_16_021057) do
 
   create_table "collection_days", force: :cascade do |t|
     t.integer "day_of_week"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["day_of_week"], name: "index_collection_days_on_day_of_week", unique: true
   end
 
   create_table "cycles", force: :cascade do |t|
     t.integer "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["name"], name: "index_cycles_on_name", unique: true
   end
 
   create_table "messages", force: :cascade do |t|
