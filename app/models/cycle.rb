@@ -1,5 +1,5 @@
 class Cycle < ApplicationRecord
-  has_one :trash, dependent: :destroy
+  has_many :trashes, dependent: :destroy
 
   validate :name_not_changed
 
